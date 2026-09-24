@@ -1,0 +1,42 @@
+[
+  {
+    "itemCode": "ITM-00001",
+    "currentQuantity": 500,
+    "updatedAt": "2026-09-09T07:03:08.673Z"
+  },
+  {
+    "itemCode": "ITM-00002",
+    "currentQuantity": 120,
+    "updatedAt": "2026-09-09T07:03:08.673Z"
+  },
+  {
+    "itemCode": "ITM-00003",
+    "currentQuantity": 850,
+    "updatedAt": "2026-09-09T07:03:08.673Z"
+  },
+  {
+    "itemCode": "ITM-00004",
+    "currentQuantity": 40,
+    "updatedAt": "2026-09-09T07:03:08.673Z"
+  },
+  {
+    "itemCode": "ITM-00005",
+    "currentQuantity": 300,
+    "updatedAt": "2026-09-09T07:03:08.673Z"
+  },
+  {
+    "itemCode": "ITM-00006",
+    "currentQuantity": 200,
+    "updatedAt": "2026-09-09T07:03:08.673Z"
+  },
+  {
+    "itemCode": "ITM-00007",
+    "currentQuantity": 5,
+    "updatedAt": "2026-09-09T07:03:08.673Z"
+  },
+  {
+    "itemCode": "ITM-00008",
+    "currentQuantity": 600,
+    "updatedAt": "2026-09-09T07:03:08.673Z"
+  }
+]

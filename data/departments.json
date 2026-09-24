@@ -1,0 +1,7 @@
+[
+  { "id": "dept-1", "name": "Production" },
+  { "id": "dept-2", "name": "Maintenance" },
+  { "id": "dept-3", "name": "Quality Control" },
+  { "id": "dept-4", "name": "Stores" },
+  { "id": "dept-5", "name": "Administration" }
+]

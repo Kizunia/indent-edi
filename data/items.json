@@ -1,0 +1,10 @@
+[
+  { "id": "item-1", "itemCode": "ITM-00001", "itemName": "Mild Steel Rod 12mm", "specification": "IS 2062 Gr B", "drawingNumber": "DRG-1001", "unit": "Kg" },
+  { "id": "item-2", "itemCode": "ITM-00002", "itemName": "Ball Bearing 6205", "specification": "SKF 6205-2RS", "drawingNumber": "DRG-1002", "unit": "Nos" },
+  { "id": "item-3", "itemCode": "ITM-00003", "itemName": "Hydraulic Oil ISO 68", "specification": "Servo System 68", "drawingNumber": "", "unit": "Litre" },
+  { "id": "item-4", "itemCode": "ITM-00004", "itemName": "V-Belt A-52", "specification": "Fenner A52", "drawingNumber": "DRG-1004", "unit": "Nos" },
+  { "id": "item-5", "itemCode": "ITM-00005", "itemName": "Welding Electrode 3.15mm", "specification": "E6013", "drawingNumber": "", "unit": "Kg" },
+  { "id": "item-6", "itemCode": "ITM-00006", "itemName": "Safety Gloves (Leather)", "specification": "IS 6994", "drawingNumber": "", "unit": "Pair" },
+  { "id": "item-7", "itemCode": "ITM-00007", "itemName": "Motor Starter 15HP", "specification": "L&T MK1", "drawingNumber": "DRG-1007", "unit": "Nos" },
+  { "id": "item-8", "itemCode": "ITM-00008", "itemName": "PVC Pipe 2 inch", "specification": "ASTM D1785", "drawingNumber": "", "unit": "Meter" }
+]

@@ -1,0 +1,45 @@
+[
+  {
+    "id": "1e091b34-e924-40c4-b9f3-136df9a032cf",
+    "indentNumber": "IND-20260924-0001",
+    "indentType": "Purchase",
+    "indentDate": "2026-09-24",
+    "time": "12:59",
+    "department": "Production",
+    "createdBy": "iohioerr",
+    "remark": "",
+    "status": "Submitted",
+    "items": [
+      {
+        "indentItemId": "630e0279-c07c-4d7c-b713-0e89fe0173a6",
+        "itemId": "item-1",
+        "itemCode": "ITM-00001",
+        "itemName": "Mild Steel Rod 12mm",
+        "specification": "IS 2062 Gr B",
+        "drawingNumber": "DRG-1001",
+        "department": "Production",
+        "purpose": "34q 3",
+        "currentStockAtEntry": 500,
+        "requiredQuantity": 53,
+        "requiredDate": "2026-09-26",
+        "unit": "Kg"
+      },
+      {
+        "indentItemId": "bec1a02f-f9c3-424a-bcb4-6b3218f23973",
+        "itemId": "item-6",
+        "itemCode": "ITM-00006",
+        "itemName": "Safety Gloves (Leather)",
+        "specification": "IS 6994",
+        "drawingNumber": "",
+        "department": "Production",
+        "purpose": "34",
+        "currentStockAtEntry": 200,
+        "requiredQuantity": 34,
+        "requiredDate": "2026-09-29",
+        "unit": "Pair"
+      }
+    ],
+    "createdAt": "2026-09-24T07:30:53.787Z",
+    "updatedAt": "2026-09-24T07:30:53.787Z"
+  }
+]

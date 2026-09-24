@@ -1,0 +1,6 @@
+[
+  { "id": "type-1", "name": "Purchase" },
+  { "id": "type-2", "name": "Maintenance" },
+  { "id": "type-3", "name": "Production" },
+  { "id": "type-4", "name": "Consumables" }
+]
