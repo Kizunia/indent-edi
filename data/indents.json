@@ -1,5 +1,34 @@
 [
   {
+    "id": "72205dee-6454-477a-a9f4-5d478ddd13ef",
+    "indentNumber": "IND-20260924-0002",
+    "indentType": "Purchase",
+    "indentDate": "2026-09-24",
+    "time": "14:43",
+    "department": "Stores",
+    "createdBy": "soham",
+    "remark": "",
+    "status": "Submitted",
+    "items": [
+      {
+        "indentItemId": "45bf5b2e-51d4-4a13-ad54-db23afa8c1dc",
+        "itemId": "item-7",
+        "itemCode": "ITM-00007",
+        "itemName": "Motor Starter 15HP",
+        "specification": "L&T MK1",
+        "drawingNumber": "DRG-1007",
+        "department": "Stores",
+        "purpose": "",
+        "currentStockAtEntry": 5,
+        "requiredQuantity": 2,
+        "requiredDate": "2026-09-24",
+        "unit": "Nos"
+      }
+    ],
+    "createdAt": "2026-09-24T09:14:25.679Z",
+    "updatedAt": "2026-09-24T09:14:25.679Z"
+  },
+  {
     "id": "1e091b34-e924-40c4-b9f3-136df9a032cf",
     "indentNumber": "IND-20260924-0001",
     "indentType": "Purchase",
