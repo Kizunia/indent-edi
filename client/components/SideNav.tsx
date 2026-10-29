@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import DevUserSwitcher from "./DevUserSwitcher";
 
 const links = [
   { href: "/indents", label: "All Indents" },
@@ -58,7 +59,11 @@ export default function SideNav() {
         })}
       </nav>
 
-      <div style={{ marginTop: "auto", padding: "14px 18px", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
+      <div style={{ marginTop: "auto" }}>
+        <DevUserSwitcher />
+      </div>
+
+      <div style={{ padding: "14px 18px", borderTop: "1px solid rgba(255,255,255,0.12)" }}>
         <div style={{ fontSize: 11, color: "rgba(255,255,255,0.45)" }}>
           Approval workflow is handled by another team. This console covers
           create, save, submit, and manage.
