@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Unit {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique @db.VarChar(20)
+  name      String   @db.VarChar(80)
+  symbol    String?  @db.VarChar(20)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  items Item[]
+  lines IndentItem[]
+
+  @@map("unit_master")
+}
+
+model Department {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique @db.VarChar(30)
+  name      String   @db.VarChar(150)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  indents Indent[]
+  lines   IndentItem[]
+
+  @@map("department_master")
+}
+
+model IndentType {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique @db.VarChar(30)
+  name        String   @db.VarChar(100)
+  description String?  @db.VarChar(500)
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  indents Indent[]
+
+  @@map("indent_type_master")
+}
+
+model IndentStatus {
+  id         Int      @id @default(autoincrement())
+  code       String   @unique @db.VarChar(30)
+  name       String   @db.VarChar(80)
+  sortOrder  Int      @default(0) @map("sort_order")
+  isEditable Boolean  @default(false) @map("is_editable")
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  indents     Indent[]
+  historyFrom IndentStatusHistory[] @relation("HistoryFrom")
+  historyTo   IndentStatusHistory[] @relation("HistoryTo")
+
+  @@map("indent_status_master")
+}
+
+model Item {
+  id              Int      @id @default(autoincrement())
+  itemCode        String   @unique @map("item_code") @db.VarChar(50)
+  itemName        String   @map("item_name") @db.VarChar(255)
+  specification   String?  @db.Text
+  drawingNumber   String?  @map("drawing_number") @db.VarChar(100)
+  defaultUnitId   Int?     @map("default_unit_id")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  createdByUserId String?  @map("created_by_user_id") @db.VarChar(64)
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  defaultUnit Unit?          @relation(fields: [defaultUnitId], references: [id])
+  stock       StockBalance?
+  lines       IndentItem[]
+
+  @@index([isActive, itemName])
+  @@index([defaultUnitId])
+  @@map("item_master")
+}
+
+model StockBalance {
+  itemId          Int      @id @map("item_id")
+  currentQuantity Decimal  @map("current_quantity") @db.Decimal(18, 4)
+  updatedAt       DateTime @map("updated_at")
+
+  item Item @relation(fields: [itemId], references: [id])
+
+  @@map("stock_balance")
+}
+
+model NumberSequence {
+  scope     String   @id @db.VarChar(64)
+  lastValue Int      @default(0) @map("last_value")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("number_sequence")
+}
+
+model Indent {
+  id                Int       @id @default(autoincrement())
+  indentNumber      String    @unique @map("indent_number") @db.VarChar(30)
+  indentTypeId      Int       @map("indent_type_id")
+  statusId          Int       @map("status_id")
+  departmentId      Int?      @map("department_id")
+  indentDate        DateTime  @map("indent_date") @db.Date
+  indentTime        DateTime  @map("indent_time") @db.Time(0)
+  remark            String?   @db.Text
+  version           Int       @default(1)
+  createdAt         DateTime  @default(now()) @map("created_at")
+  createdByUserId   String    @map("created_by_user_id") @db.VarChar(64)
+  createdByName     String    @map("created_by_name") @db.VarChar(150)
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  updatedByUserId   String?   @map("updated_by_user_id") @db.VarChar(64)
+  submittedAt       DateTime? @map("submitted_at")
+  submittedByUserId String?   @map("submitted_by_user_id") @db.VarChar(64)
+  deletedAt         DateTime? @map("deleted_at")
+  deletedByUserId   String?   @map("deleted_by_user_id") @db.VarChar(64)
+
+  indentType IndentType            @relation(fields: [indentTypeId], references: [id])
+  status     IndentStatus          @relation(fields: [statusId], references: [id])
+  department Department?           @relation(fields: [departmentId], references: [id])
+  items      IndentItem[]
+  history    IndentStatusHistory[]
+
+  @@index([indentDate, id])
+  @@index([statusId, indentDate])
+  @@index([indentTypeId, indentDate])
+  @@index([departmentId, indentDate])
+  @@index([createdByUserId, indentDate])
+  @@map("indent_master")
+}
+
+model IndentItem {
+  id                    Int       @id @default(autoincrement())
+  indentId              Int       @map("indent_id")
+  lineNumber            Int       @map("line_number")
+  itemId                Int       @map("item_id")
+  itemCodeSnapshot      String    @map("item_code_snapshot") @db.VarChar(50)
+  itemNameSnapshot      String    @map("item_name_snapshot") @db.VarChar(255)
+  specificationSnapshot String?   @map("specification_snapshot") @db.Text
+  drawingNumberSnapshot String?   @map("drawing_number_snapshot") @db.VarChar(100)
+  departmentId          Int       @map("department_id")
+  purpose               String?   @db.Text
+  currentStockSnapshot  Decimal?  @map("current_stock_snapshot") @db.Decimal(18, 4)
+  stockCheckedAt        DateTime? @map("stock_checked_at")
+  requiredQuantity      Decimal   @map("required_quantity") @db.Decimal(18, 4)
+  requiredUnitId        Int       @map("required_unit_id")
+  requiredDate          DateTime  @map("required_date") @db.Date
+  createdAt             DateTime  @default(now()) @map("created_at")
+  createdByUserId       String?   @map("created_by_user_id") @db.VarChar(64)
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  updatedByUserId       String?   @map("updated_by_user_id") @db.VarChar(64)
+
+  indent       Indent     @relation(fields: [indentId], references: [id], onDelete: Cascade)
+  item         Item       @relation(fields: [itemId], references: [id])
+  department   Department @relation(fields: [departmentId], references: [id])
+  requiredUnit Unit       @relation(fields: [requiredUnitId], references: [id])
+
+  @@unique([indentId, lineNumber])
+  @@index([itemId])
+  @@index([departmentId])
+  @@index([requiredUnitId])
+  @@map("indent_item")
+}
+
+model IndentStatusHistory {
+  id              Int      @id @default(autoincrement())
+  indentId        Int      @map("indent_id")
+  fromStatusId    Int?     @map("from_status_id")
+  toStatusId      Int      @map("to_status_id")
+  changedAt       DateTime @default(now()) @map("changed_at")
+  changedByUserId String?  @map("changed_by_user_id") @db.VarChar(64)
+  source          String   @db.VarChar(20)
+  note            String?  @db.VarChar(500)
+
+  indent     Indent        @relation(fields: [indentId], references: [id], onDelete: Cascade)
+  fromStatus IndentStatus? @relation("HistoryFrom", fields: [fromStatusId], references: [id])
+  toStatus   IndentStatus  @relation("HistoryTo", fields: [toStatusId], references: [id])
+
+  @@index([indentId, changedAt])
+  @@index([fromStatusId])
+  @@index([toStatusId])
+  @@map("indent_status_history")
+}
