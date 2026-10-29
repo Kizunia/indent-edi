@@ -15,9 +15,8 @@ export default function Pagination({ page, pageSize, total, onPageChange }: Pagi
 
   const pages: number[] = [];
   const windowSize = 5;
-  let start = Math.max(1, page - Math.floor(windowSize / 2));
-  let end = Math.min(totalPages, start + windowSize - 1);
-  start = Math.max(1, end - windowSize + 1);
+  const end = Math.min(totalPages, Math.max(1, page - Math.floor(windowSize / 2)) + windowSize - 1);
+  const start = Math.max(1, end - windowSize + 1);
   for (let p = start; p <= end; p++) pages.push(p);
 
   return (

@@ -1,0 +1,29 @@
+# Local MySQL for development and tests (DEC-023).
+# Host port 3307 so it does not clash with a MySQL already installed on 3306.
+# Databases: indent_dev (app) and indent_test (tests only; may be reset freely).
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: indent-mysql
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --default-time-zone=+00:00
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: indent_dev
+      TZ: UTC
+    ports:
+      - "3307:3306"
+    volumes:
+      - indent-mysql-data:/var/lib/mysql
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  indent-mysql-data:
