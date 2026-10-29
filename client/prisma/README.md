@@ -12,4 +12,4 @@ Requires MySQL >= 8.0.16 (CHECK constraints are ignored on older versions).
 If the tables were already created by hand from the SQL file, do not run step 4.
 Instead mark the migration as applied: `npx prisma migrate resolve --applied 0001_init`.
 
-Design rationale: see the data model document (decision log D-01..D-31).
+Design rationale: see [`docs/data-model/final-data-model.md`](../../docs/data-model/final-data-model.md) (decision log D-01..D-31).
