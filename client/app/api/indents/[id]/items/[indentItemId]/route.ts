@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteIndentItem } from "@/lib/store";
+import { deleteIndentItem } from "@/lib/repositories/indents";
+import { userMessage } from "@/lib/db/errors";
 
 export async function DELETE(
   _req: NextRequest,
@@ -7,9 +8,9 @@ export async function DELETE(
 ) {
   const { id, indentItemId } = await params;
   try {
-    const indent = deleteIndentItem(id, indentItemId);
+    const indent = await deleteIndentItem(id, indentItemId);
     return NextResponse.json(indent);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to delete Item." }, { status: 400 });
+  } catch (err) {
+    return NextResponse.json({ error: userMessage(err, "Failed to delete Item.") }, { status: 400 });
   }
 }

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { deleteIndent, getIndentById, updateIndent } from "@/lib/store";
+import { deleteIndent, getIndentById, updateIndent } from "@/lib/repositories/indents";
+import { userMessage } from "@/lib/db/errors";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const indent = getIndentById(id);
+  const indent = await getIndentById(id).catch(() => undefined);
   if (!indent) return NextResponse.json({ error: "Indent not found." }, { status: 404 });
   return NextResponse.json(indent);
 }
@@ -18,10 +19,10 @@ export async function PUT(
   const { id } = await params;
   try {
     const body = await req.json();
-    const indent = updateIndent(id, body);
+    const indent = await updateIndent(id, body);
     return NextResponse.json(indent);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to update Indent." }, { status: 400 });
+  } catch (err) {
+    return NextResponse.json({ error: userMessage(err, "Failed to update Indent.") }, { status: 400 });
   }
 }
 
@@ -31,9 +32,9 @@ export async function DELETE(
 ) {
   const { id } = await params;
   try {
-    deleteIndent(id);
+    await deleteIndent(id);
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to delete Indent." }, { status: 400 });
+  } catch (err) {
+    return NextResponse.json({ error: userMessage(err, "Failed to delete Indent.") }, { status: 400 });
   }
 }

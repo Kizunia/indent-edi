@@ -130,7 +130,7 @@ export default function ItemEntryForm({ defaultDepartment, departments, onAdd }:
     if (!item) {
       // Item Name entered manually (§13) with no Item Master match — create it.
       // Item Code is system-generated (§14); format is a placeholder pending
-      // company confirmation (see lib/store.ts).
+      // company confirmation (see lib/repositories/items.ts).
       const res = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

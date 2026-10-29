@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentStock } from "@/lib/store";
+import { getCurrentStock } from "@/lib/repositories/stock";
+import { userMessage } from "@/lib/db/errors";
 
 // FR-07 / SRS §19: retrieve Current Stock using the Item's unique Item Code.
 export async function GET(
@@ -7,6 +8,10 @@ export async function GET(
   { params }: { params: Promise<{ itemCode: string }> }
 ) {
   const { itemCode } = await params;
-  const quantity = getCurrentStock(decodeURIComponent(itemCode));
-  return NextResponse.json({ itemCode, currentQuantity: quantity });
+  try {
+    const quantity = await getCurrentStock(decodeURIComponent(itemCode));
+    return NextResponse.json({ itemCode, currentQuantity: quantity });
+  } catch (err) {
+    return NextResponse.json({ error: userMessage(err, "Failed to retrieve Current Stock.") }, { status: 500 });
+  }
 }

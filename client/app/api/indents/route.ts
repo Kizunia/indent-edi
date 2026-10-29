@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createIndent, queryIndents } from "@/lib/store";
+import { createIndent, queryIndents } from "@/lib/repositories/indents";
+import { userMessage } from "@/lib/db/errors";
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
@@ -14,8 +15,11 @@ export async function GET(req: NextRequest) {
     page: sp.get("page") ? Number(sp.get("page")) : 1,
     pageSize: sp.get("pageSize") ? Number(sp.get("pageSize")) : 10,
   };
-  const data = queryIndents(filters);
-  return NextResponse.json(data);
+  try {
+    return NextResponse.json(await queryIndents(filters));
+  } catch (err) {
+    return NextResponse.json({ error: userMessage(err, "Failed to load Indents.") }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -35,9 +39,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const indent = createIndent(body);
+    const indent = await createIndent(body);
     return NextResponse.json(indent, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || "Failed to create Indent." }, { status: 400 });
+  } catch (err) {
+    return NextResponse.json({ error: userMessage(err, "Failed to create Indent.") }, { status: 400 });
   }
 }
