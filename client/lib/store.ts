@@ -117,8 +117,13 @@ export function generateIndentNumber(): string {
   const indents = getAllIndents();
   const today = new Date();
   const datePart = today.toISOString().slice(0, 10).replace(/-/g, "");
-  const todaysCount = indents.filter((i) => i.indentNumber.includes(datePart)).length;
-  const seq = String(todaysCount + 1).padStart(4, "0");
+  // Use the highest sequence already issued today (not a count) so a deleted
+  // Indent can never cause a number to be handed out twice (SRS BR-02).
+  const prefix = `IND-${datePart}-`;
+  const maxSeq = indents
+    .filter((i) => i.indentNumber.startsWith(prefix))
+    .reduce((max, i) => Math.max(max, Number(i.indentNumber.slice(prefix.length)) || 0), 0);
+  const seq = String(maxSeq + 1).padStart(4, "0");
   return `IND-${datePart}-${seq}`;
 }
 
