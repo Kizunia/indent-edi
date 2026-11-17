@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import StatusBadge from "@/components/StatusBadge";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import type { Indent, IndentItem } from "@/lib/types";
+import { legacyEditRowSchema } from "@/lib/shared/schemas/legacy";
 
 interface EditRow {
   indentItemId: string;
@@ -73,6 +74,19 @@ export default function IndentDetailPage({ params }: { params: Promise<{ id: str
 
   async function performSaveEdits() {
     if (!indent) return;
+    for (const r of Object.values(editRows)) {
+      const check = legacyEditRowSchema.safeParse(r);
+      if (!check.success) {
+        setError(check.error.issues[0].message);
+        setConfirm(null);
+        return;
+      }
+      if (r.requiredDate < indent.indentDate) {
+        setError("Required Date cannot be before the Indent Date.");
+        setConfirm(null);
+        return;
+      }
+    }
     const patch = Object.values(editRows).map((r) => ({
       indentItemId: r.indentItemId,
       purpose: r.purpose,

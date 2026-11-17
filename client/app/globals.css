@@ -153,6 +153,9 @@ textarea:focus-visible {
   background: var(--panel);
   color: var(--ink);
 }
+.input[aria-invalid="true"] {
+  border-color: var(--red);
+}
 .input:disabled {
   background: var(--grey-soft);
   color: var(--ink-soft);

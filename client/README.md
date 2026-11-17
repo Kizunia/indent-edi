@@ -8,6 +8,9 @@ with no external services.
 
 ## Running it
 
+Full runbook (dev and production servers, database, seeding, tests, troubleshooting):
+[`docs/architecture/dev-setup.md`](../docs/architecture/dev-setup.md). Short version:
+
 ```bash
 npm install
 npm run dev

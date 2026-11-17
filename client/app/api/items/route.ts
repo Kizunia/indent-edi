@@ -1,25 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createItem, searchItems } from "@/lib/repositories/items";
 import { userMessage } from "@/lib/db/errors";
+import { legacyCreateItemSchema, legacyItemSearchSchema } from "@/lib/shared/schemas/legacy";
+import { validateBody, validateQuery, validationResponse } from "@/lib/server/http/legacy";
 
 export async function GET(req: NextRequest) {
-  const q = req.nextUrl.searchParams.get("q") || "";
   try {
+    const { q } = validateQuery(req, legacyItemSearchSchema);
     return NextResponse.json(await searchItems(q));
   } catch (err) {
-    return NextResponse.json({ error: userMessage(err, "Failed to search Items.") }, { status: 500 });
+    return validationResponse(err) ?? NextResponse.json({ error: userMessage(err, "Failed to search Items.") }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    if (!body.itemName || !body.unit) {
-      return NextResponse.json({ error: "Item Name and Unit are required." }, { status: 400 });
-    }
+    const body = await validateBody(req, legacyCreateItemSchema);
     const item = await createItem(body);
     return NextResponse.json(item, { status: 201 });
   } catch (err) {
-    return NextResponse.json({ error: userMessage(err, "Failed to create Item.") }, { status: 400 });
+    return validationResponse(err) ?? NextResponse.json({ error: userMessage(err, "Failed to create Item.") }, { status: 400 });
   }
 }

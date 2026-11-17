@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import ItemEntryForm, { AddedItem } from "@/components/ItemEntryForm";
 import CurrentItemList from "@/components/CurrentItemList";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { legacyHeaderSchema } from "@/lib/shared/schemas/legacy";
 
 function todayStr() {
   return new Date().toISOString().slice(0, 10);
@@ -44,12 +45,14 @@ export default function NewIndentPage() {
   }, []);
 
   function validateHeader(): string | null {
-    if (!indentType) return "Indent Type is required.";
-    if (!indentDate) return "Indent Date is required.";
-    if (!department) return "Department is required.";
-    if (!createdBy.trim()) return "Created By is required.";
+    const parsed = legacyHeaderSchema.safeParse({ indentType, indentDate, time, department, createdBy, remark });
+    if (!parsed.success) return parsed.error.issues[0].message;
     // FR-08 / SRS §25: an Indent cannot be saved without at least one Item.
     if (items.length === 0) return "Add at least one Item before saving.";
+    // Items added earlier may predate a changed Indent Date.
+    if (items.some((i) => i.requiredDate < indentDate)) {
+      return "Required Date cannot be before the Indent Date. Check the Item list.";
+    }
     return null;
   }
 
@@ -148,6 +151,7 @@ export default function NewIndentPage() {
         <ItemEntryForm
           defaultDepartment={department}
           departments={meta.departments}
+          indentDate={indentDate}
           onAdd={(item) => setItems((prev) => [...prev, item])}
         />
       </div>

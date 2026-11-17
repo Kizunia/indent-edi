@@ -2,25 +2,25 @@ import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { getIndentsByIds, queryIndents } from "@/lib/repositories/indents";
 import { userMessage } from "@/lib/db/errors";
+import { legacyExportSchema } from "@/lib/shared/schemas/legacy";
+import { validateBody, validationResponse } from "@/lib/server/http/legacy";
 import type { Indent } from "@/lib/types";
 
 // FR-19 / SRS §40-41: export one selected Indent, multiple selected Indents,
 // or all Indents (respecting the currently applied filters), each row
 // carrying full Indent + Item information.
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({}));
-  const mode: "selected" | "all" = body.mode || "selected";
-
   let indents: Indent[];
   try {
-    if (mode === "all") {
+    const body = await validateBody(req, legacyExportSchema);
+    if (body.mode === "all") {
       // "All Indents" honors any filters currently applied on the list (§40C).
       indents = (await queryIndents({ ...(body.filters || {}), page: 1, pageSize: 100000 })).results;
     } else {
-      indents = await getIndentsByIds(body.ids || []);
+      indents = await getIndentsByIds(body.ids);
     }
   } catch (err) {
-    return NextResponse.json({ error: userMessage(err, "Failed to export.") }, { status: 500 });
+    return validationResponse(err) ?? NextResponse.json({ error: userMessage(err, "Failed to export.") }, { status: 500 });
   }
 
   if (indents.length === 0) {

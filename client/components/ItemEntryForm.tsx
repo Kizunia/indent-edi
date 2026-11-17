@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { Item } from "@/lib/types";
+import { legacyItemEntrySchema } from "@/lib/shared/schemas/legacy";
 
 export interface AddedItem {
   itemId: string;
@@ -20,6 +21,8 @@ export interface AddedItem {
 interface ItemEntryFormProps {
   defaultDepartment: string;
   departments: { id: string; name: string }[];
+  /** Header Indent Date (YYYY-MM-DD); Required Date may not be before it. */
+  indentDate?: string;
   onAdd: (item: AddedItem) => void;
 }
 
@@ -28,7 +31,7 @@ interface ItemEntryFormProps {
 // removal before save (§24) are both TBD — this demo allows both a
 // duplicate add and a pre-save remove (handled in the parent list),
 // clearly flagged here so it is easy to lock down once confirmed.
-export default function ItemEntryForm({ defaultDepartment, departments, onAdd }: ItemEntryFormProps) {
+export default function ItemEntryForm({ defaultDepartment, departments, indentDate, onAdd }: ItemEntryFormProps) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Item[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -45,6 +48,7 @@ export default function ItemEntryForm({ defaultDepartment, departments, onAdd }:
   const [requiredQuantity, setRequiredQuantity] = useState("");
   const [requiredDate, setRequiredDate] = useState("");
   const [formError, setFormError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const boxRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => setDepartment(defaultDepartment), [defaultDepartment]);
@@ -115,16 +119,34 @@ export default function ItemEntryForm({ defaultDepartment, departments, onAdd }:
     setRequiredQuantity("");
     setRequiredDate("");
     setFormError("");
+    setFieldErrors({});
   }
 
   async function handleAddItem() {
     setFormError("");
-    if (!query.trim()) return setFormError("Item Name is required.");
-    if (!unit.trim()) return setFormError("Unit is required.");
-    if (!department) return setFormError("Department is required.");
-    const qty = Number(requiredQuantity);
-    if (!requiredQuantity || isNaN(qty) || qty <= 0) return setFormError("Enter a valid Required Quantity.");
-    if (!requiredDate) return setFormError("Required Date is required.");
+    setFieldErrors({});
+    const parsed = legacyItemEntrySchema.safeParse({
+      itemName: query,
+      unit,
+      specification,
+      drawingNumber,
+      department,
+      purpose,
+      requiredQuantity: requiredQuantity.trim(),
+      requiredDate,
+    });
+    if (!parsed.success) {
+      const errors: Record<string, string> = {};
+      for (const issue of parsed.error.issues) errors[String(issue.path[0])] ??= issue.message;
+      setFieldErrors(errors);
+      return setFormError(Object.values(errors)[0]);
+    }
+    const entry = parsed.data;
+    if (indentDate && entry.requiredDate < indentDate) {
+      setFieldErrors({ requiredDate: "Required Date cannot be before the Indent Date." });
+      return setFormError("Required Date cannot be before the Indent Date.");
+    }
+    const qty = Number(entry.requiredQuantity);
 
     let item: Item | null = selectedItem;
     if (!item) {
@@ -134,7 +156,12 @@ export default function ItemEntryForm({ defaultDepartment, departments, onAdd }:
       const res = await fetch("/api/items", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemName: query.trim(), specification, drawingNumber, unit }),
+        body: JSON.stringify({
+          itemName: entry.itemName,
+          specification: entry.specification,
+          drawingNumber: entry.drawingNumber,
+          unit: entry.unit,
+        }),
       });
       if (!res.ok) {
         const d = await res.json();
@@ -149,14 +176,14 @@ export default function ItemEntryForm({ defaultDepartment, departments, onAdd }:
       itemId: item!.id,
       itemCode: item!.itemCode,
       itemName: item!.itemName,
-      specification,
-      drawingNumber,
-      department,
-      purpose,
+      specification: entry.specification,
+      drawingNumber: entry.drawingNumber,
+      department: entry.department,
+      purpose: entry.purpose,
       currentStockAtEntry: stock,
       requiredQuantity: qty,
-      requiredDate,
-      unit,
+      requiredDate: entry.requiredDate,
+      unit: entry.unit,
     });
 
     resetForm();
@@ -180,6 +207,7 @@ export default function ItemEntryForm({ defaultDepartment, departments, onAdd }:
               setShowSuggestions(true);
             }}
             onFocus={() => setShowSuggestions(true)}
+            aria-invalid={!!fieldErrors.itemName}
           />
           {showSuggestions && query.trim() && !selectedItem && (
             <div
@@ -218,7 +246,7 @@ export default function ItemEntryForm({ defaultDepartment, departments, onAdd }:
 
         <div>
           <label className="field-label field-required">Unit</label>
-          <input className="input" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="e.g. Kg, Nos" disabled={!!selectedItem} />
+          <input className="input" value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="e.g. Kg, Nos" disabled={!!selectedItem} aria-invalid={!!fieldErrors.unit} />
         </div>
       </div>
 
@@ -254,11 +282,12 @@ export default function ItemEntryForm({ defaultDepartment, departments, onAdd }:
             min={0}
             value={requiredQuantity}
             onChange={(e) => setRequiredQuantity(e.target.value)}
+            aria-invalid={!!fieldErrors.requiredQuantity}
           />
         </div>
         <div>
           <label className="field-label field-required">Required Date</label>
-          <input type="date" className="input" value={requiredDate} onChange={(e) => setRequiredDate(e.target.value)} />
+          <input type="date" className="input" value={requiredDate} onChange={(e) => setRequiredDate(e.target.value)} aria-invalid={!!fieldErrors.requiredDate} />
         </div>
       </div>
 
