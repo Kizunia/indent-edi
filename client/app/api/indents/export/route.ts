@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
-import { getAllIndents, queryIndents } from "@/lib/store";
+import { getIndentsByIds, queryIndents } from "@/lib/repositories/indents";
+import { userMessage } from "@/lib/db/errors";
 import type { Indent } from "@/lib/types";
 
 // FR-19 / SRS §40-41: export one selected Indent, multiple selected Indents,
@@ -11,13 +12,15 @@ export async function POST(req: NextRequest) {
   const mode: "selected" | "all" = body.mode || "selected";
 
   let indents: Indent[];
-  if (mode === "all") {
-    // "All Indents" honors any filters currently applied on the list (§40C).
-    indents = queryIndents({ ...(body.filters || {}), page: 1, pageSize: 100000 }).results;
-  } else {
-    const ids: string[] = body.ids || [];
-    const all = getAllIndents();
-    indents = all.filter((i) => ids.includes(i.id));
+  try {
+    if (mode === "all") {
+      // "All Indents" honors any filters currently applied on the list (§40C).
+      indents = (await queryIndents({ ...(body.filters || {}), page: 1, pageSize: 100000 })).results;
+    } else {
+      indents = await getIndentsByIds(body.ids || []);
+    }
+  } catch (err) {
+    return NextResponse.json({ error: userMessage(err, "Failed to export.") }, { status: 500 });
   }
 
   if (indents.length === 0) {

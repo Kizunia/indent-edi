@@ -7,13 +7,21 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test tests/store.test.ts"
+    "postinstall": "prisma generate",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:studio": "prisma studio",
+    "db:validate": "prisma validate",
+    "db:seed": "prisma db seed",
+    "db:seed:sample": "tsx prisma/seed-sample.ts",
+    "test": "tsx --test tests/repositories.test.ts"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "next": "16.3.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "uuid": "^14.0.2",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -21,10 +29,14 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@types/uuid": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "prisma": "^6.19.3",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
