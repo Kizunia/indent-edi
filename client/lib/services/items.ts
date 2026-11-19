@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "../db/client";
 import { authorize, can } from "../server/auth/authorize";
 import type { AuthUser } from "../server/auth/types";
+import type { ItemSearchField } from "../shared/schemas/item";
 import { getStockProvider } from "./stock-provider";
 import type { ItemOption, StockEntry } from "./types";
 
@@ -32,10 +33,18 @@ function toOption(i: Prisma.ItemGetPayload<{ include: typeof include }>): ItemOp
   };
 }
 
+/** Name and/or code conditions for one match mode; `field` picks which input is searching (DEC-027). */
+function matchers(field: ItemSearchField | undefined, mode: "startsWith" | "contains", term: string): Prisma.ItemWhereInput[] {
+  const name: Prisma.ItemWhereInput = { itemName: { [mode]: term } };
+  const code: Prisma.ItemWhereInput = { itemCode: { [mode]: term } };
+  return field === "name" ? [name] : field === "code" ? [code] : [name, code];
+}
+
 /** Item picker (DEC-025): active items, names/codes starting with the term first, max 20. */
 export async function searchItems(
   user: AuthUser | null,
-  q: string
+  q: string,
+  field?: ItemSearchField
 ): Promise<{ items: ItemOption[]; hasMore: boolean }> {
   requireItemAccess(user);
   const term = escapeLike(q.trim());
@@ -49,7 +58,7 @@ export async function searchItems(
   }
 
   const starts = await prisma.item.findMany({
-    where: { ...active, OR: [{ itemName: { startsWith: term } }, { itemCode: { startsWith: term } }] },
+    where: { ...active, OR: matchers(field, "startsWith", term) },
     include,
     orderBy: order,
     take: limit,
@@ -60,7 +69,7 @@ export async function searchItems(
       where: {
         ...active,
         id: { notIn: starts.map((r) => r.id) },
-        OR: [{ itemName: { contains: term } }, { itemCode: { contains: term } }],
+        OR: matchers(field, "contains", term),
       },
       include,
       orderBy: order,

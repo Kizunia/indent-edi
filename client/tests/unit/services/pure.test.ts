@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { safeText, wallClock } from "@/lib/server/export/indents-xlsx";
 import { escapeLike } from "@/lib/services/items";
-import { diffStock } from "@/components/indents/draft";
+import { diffStock, matchOption } from "@/components/indents/draft";
+import type { ItemOption } from "@/lib/services/types";
 import { displayInstant, displayQuantity, displayTime } from "@/lib/shared/format";
 
 describe("export helpers (DEC-018)", () => {
@@ -59,5 +60,28 @@ describe("stock freshness diff (DEC-013)", () => {
   it("reports stock that disappeared, and ignores new items", () => {
     const current = [{ itemId: 1, quantity: null, updatedAt: null }];
     expect(diffStock(lines, current)).toEqual([{ itemName: "A", was: "5.0000", now: null }]);
+  });
+});
+
+describe("Item Name / Item Code linking (DEC-027)", () => {
+  const opt = (id: number, itemCode: string, itemName: string): ItemOption => ({
+    id, itemCode, itemName, specification: null, drawingNumber: null, defaultUnit: null,
+  });
+  const options = [opt(1, "ITM-000001", "Mild Steel Rod"), opt(2, "ITM-000002", "Ball Bearing"), opt(3, "ITM-000003", "Ball Bearing")];
+
+  it("finds the item for a typed code, ignoring case and spaces", () => {
+    expect(matchOption(" itm-000001 ", options, "code")?.id).toBe(1);
+    expect(matchOption("ITM-000099", options, "code")).toBeUndefined();
+  });
+  it("finds the item for a typed name", () => {
+    expect(matchOption("mild steel rod", options, "name")?.id).toBe(1);
+  });
+  it("never picks silently when the name is ambiguous or empty", () => {
+    expect(matchOption("Ball Bearing", options, "name")).toBeUndefined();
+    expect(matchOption("   ", options, "name")).toBeUndefined();
+  });
+  it("matches only on the field being typed in", () => {
+    expect(matchOption("ITM-000001", options, "name")).toBeUndefined();
+    expect(matchOption("Mild Steel Rod", options, "code")).toBeUndefined();
   });
 });

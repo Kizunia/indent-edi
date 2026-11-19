@@ -1,9 +1,11 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useState } from "react";
+import { ApiError } from "@/lib/client/api";
 import type { Meta } from "@/lib/services/types";
 import { isValidCalendarDate } from "@/lib/shared/datetime";
 import { NOT_AVAILABLE, displayQuantity, isPositiveQuantity } from "@/lib/shared/format";
+import ErrorDialog from "@/components/ui/ErrorDialog";
 import type { DraftLine } from "./draft";
 
 type Edit = { departmentId: string; purpose: string; quantity: string; unitId: string; date: string };
@@ -26,10 +28,11 @@ export default function CurrentItemList({
   /** false when only one line is left: an indent keeps at least one (BR-01). */
   canRemove?: boolean;
 }) {
-  const uid = useId();
   const [editing, setEditing] = useState<string | null>(null);
   const [edit, setEdit] = useState<Edit | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
+  // Invalid input is shown in the error dialog (FR-22, 12.3).
+  const invalid = (message: string) => setError(new ApiError("VALIDATION_FAILED", message, 400));
 
   const unitName = (id: number) => meta.units.find((u) => u.id === id)?.name ?? "";
   const deptName = (id: number) => meta.departments.find((d) => d.id === id)?.name ?? "";
@@ -48,8 +51,8 @@ export default function CurrentItemList({
 
   function save(l: DraftLine) {
     if (!edit) return;
-    if (!isPositiveQuantity(edit.quantity.trim())) return setError("Enter a quantity greater than 0 (up to 4 decimal places).");
-    if (!isValidCalendarDate(edit.date) || edit.date < minDate) return setError("Required date cannot be before the indent date.");
+    if (!isPositiveQuantity(edit.quantity.trim())) return invalid("Enter a quantity greater than 0 (up to 4 decimal places).");
+    if (!isValidCalendarDate(edit.date) || edit.date < minDate) return invalid("Required date cannot be before the indent date.");
     onChange(l.key, {
       departmentId: Number(edit.departmentId),
       purpose: edit.purpose,
@@ -79,13 +82,15 @@ export default function CurrentItemList({
               <th scope="col">#</th>
               <th scope="col">Item Code</th>
               <th scope="col">Item Name</th>
+              <th scope="col">Specification</th>
+              <th scope="col">Drawing No.</th>
               <th scope="col">Department</th>
               <th scope="col">Purpose</th>
               <th scope="col" className="text-right">Current Stock</th>
               <th scope="col" className="text-right">Required Qty</th>
               <th scope="col">Unit</th>
               <th scope="col">Required Date</th>
-              <th scope="col"><span className="sr-only">Actions</span></th>
+              <th scope="col" className="no-print"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
@@ -95,6 +100,8 @@ export default function CurrentItemList({
                   <td>{i + 1}</td>
                   <td className="mono">{l.itemCode ?? "On save"}</td>
                   <td>{l.itemName}</td>
+                  <td>{l.specification ?? "—"}</td>
+                  <td>{l.drawingNumber ?? "—"}</td>
                   <td>
                     <select aria-label={`Department for ${l.itemName}`} className="input" value={edit.departmentId} onChange={(e) => setEdit({ ...edit, departmentId: e.target.value })}>
                       {meta.departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -115,7 +122,7 @@ export default function CurrentItemList({
                   <td>
                     <input aria-label={`Required date for ${l.itemName}`} className="input" type="date" min={minDate} value={edit.date} onChange={(e) => setEdit({ ...edit, date: e.target.value })} />
                   </td>
-                  <td>
+                  <td className="no-print">
                     <div className="flex gap-1">
                       <button type="button" className="btn btn-primary px-2 py-1" onClick={() => save(l)}>Done</button>
                       <button type="button" className="btn btn-ghost px-2 py-1" onClick={() => { setEditing(null); setEdit(null); setError(null); }}>Cancel</button>
@@ -127,13 +134,15 @@ export default function CurrentItemList({
                   <td>{i + 1}</td>
                   <td className="mono">{l.itemCode ?? "On save"}</td>
                   <td>{l.itemName}</td>
+                  <td>{l.specification ?? "—"}</td>
+                  <td>{l.drawingNumber ?? "—"}</td>
                   <td>{deptName(l.departmentId)}</td>
                   <td>{l.purpose || "—"}</td>
                   <td className="text-right">{l.itemCode === null ? NOT_AVAILABLE : displayQuantity(l.stock)}</td>
                   <td className="text-right">{displayQuantity(l.requiredQuantity)}</td>
                   <td>{unitName(l.requiredUnitId)}</td>
                   <td>{l.requiredDate}</td>
-                  <td>
+                  <td className="no-print">
                     <div className="flex gap-1">
                       <button type="button" className="btn btn-ghost px-2 py-1" onClick={() => start(l)}>
                         Edit<span className="sr-only"> {l.itemName}</span>
@@ -151,11 +160,7 @@ export default function CurrentItemList({
           </tbody>
         </table>
       </div>
-      {error && (
-        <p id={`${uid}-err`} role="alert" className="px-4 py-2 text-[12.5px] text-[var(--red)]">
-          {error}
-        </p>
-      )}
+      <ErrorDialog error={error} onClose={() => setError(null)} />
     </div>
   );
 }

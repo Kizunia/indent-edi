@@ -246,6 +246,7 @@ export default function IndentDetailView({
                 if (line) setConfirm({ kind: "remove", line });
               }}
             />
+            <div className="no-print">
             <ItemEntryForm
               meta={meta}
               headerDepartmentId={indent.department?.id ?? null}
@@ -256,6 +257,7 @@ export default function IndentDetailView({
               addLabel="Add Item to indent"
               onAdd={(line) => new Promise<boolean>((resolve) => setConfirm({ kind: "add", line, resolve }))}
             />
+            </div>
           </>
         ) : (
           <div className="panel print-area">

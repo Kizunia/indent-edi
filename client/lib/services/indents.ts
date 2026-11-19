@@ -253,6 +253,7 @@ export function filterWhere(f: IndentFilters): Prisma.IndentWhereInput[] {
   if (f.statusId) and.push({ statusId: f.statusId });
   if (f.departmentId) and.push({ OR: [{ departmentId: f.departmentId }, { items: { some: { departmentId: f.departmentId } } }] });
   if (f.createdBy) and.push({ createdByUserId: f.createdBy });
+  if (f.date) and.push({ indentDate: toDbDate(f.date) });
   if (f.dateFrom) and.push({ indentDate: { gte: toDbDate(f.dateFrom) } });
   if (f.dateTo) and.push({ indentDate: { lte: toDbDate(f.dateTo) } });
   return and;

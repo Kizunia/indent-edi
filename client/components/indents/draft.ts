@@ -1,5 +1,5 @@
 import type { CreateLineInput } from "@/lib/shared/schemas/indent";
-import type { StockEntry } from "@/lib/services/types";
+import type { ItemOption, StockEntry } from "@/lib/services/types";
 
 // A line while the user is still building the indent (client state only, BR-10).
 export interface DraftLine {
@@ -58,4 +58,16 @@ export function diffStock(
     const now = byId.get(l.itemId) ?? null;
     return same(l.stock, now) ? [] : [{ itemName: l.itemName, was: l.stock, now }];
   });
+}
+
+/**
+ * The one item whose name (field "name") or code (field "code") equals the typed
+ * text, ignoring case and surrounding spaces. Undefined when nothing or more than
+ * one item matches, so an ambiguous name is never picked silently.
+ */
+export function matchOption(text: string, options: ItemOption[], field: "name" | "code"): ItemOption | undefined {
+  const wanted = text.trim().toLowerCase();
+  if (wanted === "") return undefined;
+  const hits = options.filter((o) => (field === "name" ? o.itemName : o.itemCode).trim().toLowerCase() === wanted);
+  return hits.length === 1 ? hits[0] : undefined;
 }

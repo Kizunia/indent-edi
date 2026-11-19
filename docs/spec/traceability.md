@@ -9,7 +9,7 @@ Every requirement id in the SRS appears here. When a work item is completed, tic
 | FR-01 | Create indent (authorized) | DEC-003, DEC-004 | permissions, api | WI-03, WI-04 | I create allowed/forbidden per role; E create |
 | FR-02 | Unique read-only indent number | DEC-010 | domain-rules, api | WI-04 | I parallel creates -> distinct, gap-free; U formatter |
 | FR-03 | Header fields | DEC-003, DEC-021, DEC-022 | validation, ui | WI-04, WI-08 | I server sets date/time/created by; U datetime |
-| FR-04 | Add Item | DEC-025, DEC-009 | ui, api | WI-08 | E add item |
+| FR-04 | Add Item | DEC-025, DEC-027, DEC-009 | ui, api | WI-08 | I item search by name/code; U name/code matching; checked in a headless browser 2026-11-19; E deferred |
 | FR-05 | Multiple items | DEC-025 | api | WI-04 | I create with 3 lines |
 | FR-06 | Auto item code | DEC-010, DEC-025 | domain-rules | WI-04 | I new item gets code in tx; rollback leaves none |
 | FR-07 | Current stock by item code | DEC-013 | api | WI-04, WI-09 | I stock lookup; "Not available" case |
@@ -18,7 +18,7 @@ Every requirement id in the SRS appears here. When a work item is completed, tic
 | FR-10 | Separate Submit | DEC-005, DEC-006 | domain-rules | WI-05 | I submit transitions; client cannot send status |
 | FR-11 | View indents | DEC-017 | api, ui | WI-07 | E list |
 | FR-12 | Search by number | DEC-011 | api, validation | WI-04, WI-07 | I exact first, partial, escaping |
-| FR-13 | Filters, combinable | DEC-022 | api, ui | WI-04, WI-07 | I filter combinations incl. dept header OR line |
+| FR-13 | Filters, combinable (Date and Date Range) | DEC-022 | api, ui | WI-04, WI-07 | I filter combinations incl. dept header OR line, single Date |
 | FR-14 | Select an indent, see details | DEC-017 | ui | WI-07 | E open detail |
 | FR-15 | 10 per page | DEC-017 | api, ui | WI-04, WI-07 | I page size 10, totals |
 | FR-16 | Edit permitted info | DEC-007, DEC-016 | domain-rules | WI-05 | I editable fields; non-editable rejected |

@@ -47,6 +47,17 @@ describe("list, filters and paging", () => {
     expect(byType.total).toBe(2);
   });
 
+  it("filters by a single Date, separately from the range (SRS 10.3)", async () => {
+    const creator = employee("t-emp-date", f.deptA);
+    const ind = await indents.createIndent(creator, newIndent(f));
+    const day = ind.indentDate;
+    expect((await indents.listIndents(creator, { page: 1, date: day })).total).toBe(1);
+    expect((await indents.listIndents(creator, { page: 1, date: "2000-01-01" })).total).toBe(0);
+    // Combined with the range and other filters the conditions all apply.
+    expect((await indents.listIndents(creator, { page: 1, date: day, dateFrom: "2099-01-01" })).total).toBe(0);
+    expect((await indents.listIndents(creator, { page: 1, date: day, indentTypeId: f.typeId })).total).toBe(1);
+  });
+
   it("filters by date range (inclusive)", async () => {
     const creator = employee("t-emp-dates", f.deptA);
     const ind = await indents.createIndent(creator, newIndent(f));
@@ -169,6 +180,30 @@ describe("items and stock (FR-07, DEC-013, DEC-025)", () => {
     expect((await items.searchItems(admin, "Alpha Zsearch")).items).toHaveLength(0);
     expect((await items.searchItems(admin, "%")).items).toHaveLength(0);
     await expectCode(items.searchItems(users.purchase, "x"), "FORBIDDEN");
+  });
+
+  it("limits the search to the name or the code input (DEC-027)", async () => {
+    await prisma.item.upsert({
+      where: { itemCode: "FLD-000100" },
+      update: { isActive: true, itemName: "Fldtest Widget" },
+      create: { itemCode: "FLD-000100", itemName: "Fldtest Widget", defaultUnitId: f.unitId },
+    });
+    await prisma.item.upsert({
+      where: { itemCode: "FLDTEST-9" },
+      update: { isActive: true, itemName: "Other Thing" },
+      create: { itemCode: "FLDTEST-9", itemName: "Other Thing", defaultUnitId: f.unitId },
+    });
+    const codes = (r: { items: { itemCode: string }[] }) => r.items.map((i) => i.itemCode).sort();
+    // Without a field both columns are searched: the name of one and the code of the other.
+    expect(codes(await items.searchItems(admin, "fldtest"))).toEqual(["FLD-000100", "FLDTEST-9"]);
+    // The Name input only looks at names, the Code input only at codes.
+    expect(codes(await items.searchItems(admin, "fldtest", "name"))).toEqual(["FLD-000100"]);
+    expect(codes(await items.searchItems(admin, "fldtest", "code"))).toEqual(["FLDTEST-9"]);
+    // The linked field comes back with the item: picking by name gives the code and vice versa.
+    const byName = (await items.searchItems(admin, "Fldtest Widget", "name")).items[0];
+    expect(byName.itemCode).toBe("FLD-000100");
+    const byCode = (await items.searchItems(admin, "FLD-000100", "code")).items[0];
+    expect(byCode.itemName).toBe("Fldtest Widget");
   });
 
   it("returns stock, null for items without a stock row and for unknown ids", async () => {

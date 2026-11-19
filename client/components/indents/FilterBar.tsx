@@ -11,11 +11,12 @@ export interface FilterValues {
   departmentId: string;
   statusId: string;
   createdBy: string;
+  date: string;
   dateFrom: string;
   dateTo: string;
 }
 
-const KEYS = ["search", "indentTypeId", "departmentId", "statusId", "createdBy", "dateFrom", "dateTo"] as const;
+const KEYS = ["search", "indentTypeId", "departmentId", "statusId", "createdBy", "date", "dateFrom", "dateTo"] as const;
 
 const serialize = (v: FilterValues) => JSON.stringify(KEYS.map((k) => v[k]));
 
@@ -71,7 +72,7 @@ export default function FilterBar({
     else push(next);
   }
 
-  const empty: FilterValues = { search: "", indentTypeId: "", departmentId: "", statusId: "", createdBy: "", dateFrom: "", dateTo: "" };
+  const empty: FilterValues = { search: "", indentTypeId: "", departmentId: "", statusId: "", createdBy: "", date: "", dateFrom: "", dateTo: "" };
   const dirty = KEYS.some((k) => values[k] !== "");
   const select = "input";
 
@@ -131,10 +132,13 @@ export default function FilterBar({
             ))}
           </select>
         </Field>
-        <Field id={`${base}-from`} label="Date from">
+        <Field id={`${base}-date`} label="Date">
+          <input id={`${base}-date`} className="input" type="date" value={values.date} onChange={(e) => change("date", e.target.value)} />
+        </Field>
+        <Field id={`${base}-from`} label="Date range: from">
           <input id={`${base}-from`} className="input" type="date" value={values.dateFrom} onChange={(e) => change("dateFrom", e.target.value)} />
         </Field>
-        <Field id={`${base}-to`} label="Date to">
+        <Field id={`${base}-to`} label="Date range: to">
           <input id={`${base}-to`} className="input" type="date" value={values.dateTo} onChange={(e) => change("dateTo", e.target.value)} />
         </Field>
         <div className="flex items-end">

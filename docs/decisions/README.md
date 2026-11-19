@@ -32,5 +32,6 @@ One file per decision, in the format of [`_template.md`](_template.md). Decision
 | [DEC-024](DEC-024-testing-ci.md) | Vitest + MySQL integration + Playwright + CI | Accepted | n/a | WI-01, WI-12 |
 | [DEC-025](DEC-025-new-items-and-item-picker.md) | New items created in the save transaction; picker rules | Accepted | 8.3-8.5, FR-06 | WI-04, WI-08 |
 | [DEC-026](DEC-026-print.md) | Whole-page print + header block | Accepted / template Provisional | 11.3, FR-20 | WI-11 |
+| [DEC-027](DEC-027-item-entry-name-and-code.md) | Item entry: linked Item Name and Item Code inputs | Accepted | 8.2-8.4, 9.3, FR-04, FR-06 | WI-08 |
 
 Overrides of the DB owner's decisions: **D-20 (Remark frozen) is superseded for Remark by DEC-007.** Tracked in [db-handoff.md](../data-model/db-handoff.md).

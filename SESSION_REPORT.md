@@ -114,3 +114,27 @@ See the root [`README.md`](README.md). In short, from `client/`: `npm ci`, copy 
 3. Add Playwright and axe (WI-12) when ready.
 4. Upgrade Next.js to 16.4.6 or later and re-run the checks.
 5. Open a pull request from `integration/complete` into `main` and let CI run for the first time.
+
+## 11. Follow-up: SRS compliance pass (2026-11-19, later the same day)
+
+Triggered by the user's review of the running app (a screenshot) and the instruction that the SRS is the source of truth.
+
+**Problems reported and fixed**
+- **"Add an item" title sat on the panel border.** Cause: a native `<fieldset>`/`<legend>` used as the panel. Now a normal panel with a heading, like the others.
+- **Dialogs opened top-left.** Cause: Tailwind's reset removes the `margin: auto` that centres a native `<dialog>`. Fixed in one CSS rule; checked in a browser (equal margins left/right and top/bottom).
+- **Item Name and Item Code.** The single combined box was replaced by two linked inputs: choosing an item in either fills the other, plus Specification, Drawing Number, Unit and Current Stock. For a new item the name is typed and the code is read-only "Assigned on save" (BR-03). New `GET /api/items?field=name|code`; decision record DEC-027.
+
+**Gaps found by comparing with the SRS and fixed**
+- Specification and Drawing Number were missing from the item entry form and from the Current Item List (SRS 8.2, 10.1).
+- No separate **Date** filter (SRS 10.3 lists Date and Date Range); added.
+- Invalid input and stock-lookup failures were inline only; they now also open the error dialog (SRS 12.3).
+- Stock was read once on selection; it is now also refreshed on window focus and right before Add (SRS 9.4).
+- Printing in edit mode would have printed the edit controls and no Specification/Drawing; the page is now landscape and controls are hidden when printing.
+
+**Decisions the user made:** keep Date/Time server-assigned (errata E-03); add the Date filter; dialog plus inline for invalid input; keep the "required date not before the indent date" rule (errata E-12).
+
+**Verification:** 289 unit and 35 integration tests, lint (0 warnings), build, and a scripted headless-Chrome run of the real app: 12 interactive checks (title position, both inputs, pick by name fills code and stock, typing clears the other input, pick by code, exact code plus Tab, error dialog content and centring, Escape closes it, new-item code read-only, Date filter present, confirm dialog centred) and an add-item run showing the new columns. No console errors. The browser script was kept outside the repository (it used `puppeteer-core` with the installed Chrome).
+
+**Documents:** [`docs/reviews/srs-compliance.md`](docs/reviews/srs-compliance.md) (requirement-by-requirement matrix), errata E-12 to E-14, DEC-027, and updates to `ui.md`, `api.md` and `traceability.md`.
+
+**Still not verified:** phone-width layout, real printing, screen readers, and any automated browser suite (Playwright/axe remain deferred).

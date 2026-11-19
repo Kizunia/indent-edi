@@ -183,6 +183,12 @@ describe("list filters", () => {
     expect(r.success).toBe(false);
     expect(indentFiltersSchema.safeParse({ dateFrom: "2026-10-01", dateTo: "2026-10-01" }).success).toBe(true);
   });
+
+  it("accepts a single Date filter next to the range (SRS 10.3)", () => {
+    expect(indentFiltersSchema.parse({ date: "2026-10-05" }).date).toBe("2026-10-05");
+    expect(indentFiltersSchema.parse({ date: "" }).date).toBeUndefined();
+    expect(indentFiltersSchema.safeParse({ date: "2026-02-30" }).success).toBe(false);
+  });
 });
 
 describe("export", () => {
@@ -198,6 +204,14 @@ describe("item and stock queries", () => {
   it("item search defaults to an empty query", () => {
     expect(itemSearchQuerySchema.parse({}).q).toBe("");
     expect(itemSearchQuerySchema.parse({ q: "  bolt " }).q).toBe("bolt");
+  });
+
+  it("item search accepts the name/code field and rejects anything else (DEC-027)", () => {
+    expect(itemSearchQuerySchema.parse({ q: "x", field: "name" }).field).toBe("name");
+    expect(itemSearchQuerySchema.parse({ q: "x", field: "code" }).field).toBe("code");
+    expect(itemSearchQuerySchema.parse({ q: "x" }).field).toBeUndefined();
+    expect(itemSearchQuerySchema.parse({ q: "x", field: "" }).field).toBeUndefined();
+    expect(itemSearchQuerySchema.safeParse({ q: "x", field: "spec" }).success).toBe(false);
   });
 
   it("stock query parses a comma list of ids", () => {

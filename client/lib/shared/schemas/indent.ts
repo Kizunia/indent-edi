@@ -115,6 +115,8 @@ export const indentFiltersSchema = z
     departmentId: optionalId("Department"),
     statusId: optionalId("Status"),
     createdBy: z.preprocess(emptyToUndefined, z.string().trim().max(64).optional()),
+    // SRS 10.3 lists "Date" (one day) and "Date Range" as separate filters.
+    date: optionalDate("Date"),
     dateFrom: optionalDate("From date"),
     dateTo: optionalDate("To date"),
   })

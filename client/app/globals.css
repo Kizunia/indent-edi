@@ -238,6 +238,10 @@ textarea:focus-visible {
 }
 
 dialog.modal {
+  /* Tailwind's base reset sets margin: 0, which removes the auto margin that
+     centres a modal <dialog>; without this it sits in the top-left corner. */
+  margin: auto;
+  overflow: auto;
   border: 1px solid var(--border-strong);
   border-radius: 6px;
   padding: 0;
@@ -264,6 +268,11 @@ dialog.modal::backdrop {
 .print-only {
   display: none;
 }
+@page {
+  size: landscape;
+  margin: 10mm;
+}
+
 @media print {
   .no-print { display: none !important; }
   .print-only { display: block !important; }

@@ -75,7 +75,11 @@ export default function NewIndentForm({
   async function begin(submit: boolean) {
     const errs = headerErrors();
     setFieldErrors(errs);
-    if (Object.keys(errs).length > 0) return;
+    if (Object.keys(errs).length > 0) {
+      // FR-22 / 12.3: invalid input is announced in a dialog; the fields stay highlighted.
+      setError(new ApiError("VALIDATION_FAILED", "Please correct the highlighted fields.", 400, errs));
+      return;
+    }
     if (lines.length === 0) {
       setError(new ApiError("INDENT_EMPTY", "An Indent cannot be saved without at least one Item."));
       return;

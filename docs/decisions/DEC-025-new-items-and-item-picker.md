@@ -1,6 +1,6 @@
 # DEC-025: New items are created inside the indent save; item picker behaviour
 
-- **Status:** Accepted (Item Master source is Provisional: SRS 8.5 TBD)
+- **Status:** Accepted (Item Master source is Provisional: SRS 8.5 TBD). Points 1 and 3 about the picker are refined by [DEC-027](DEC-027-item-entry-name-and-code.md): two linked inputs, Item Name and Item Code
 - **Date:** 2026-10-29
 - **Decided by:** team (adopts D-27)
 - **SRS refs:** 8.3, 8.4, 8.5, 8.7, FR-04, FR-06, FR-07, BR-03

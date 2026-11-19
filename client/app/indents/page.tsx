@@ -12,7 +12,7 @@ export const metadata = { title: "Indents · Organize Indent System" };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-const FILTER_KEYS = ["search", "indentTypeId", "departmentId", "statusId", "createdBy", "dateFrom", "dateTo"] as const;
+const FILTER_KEYS = ["search", "indentTypeId", "departmentId", "statusId", "createdBy", "date", "dateFrom", "dateTo"] as const;
 
 // FR-11..FR-15 (DEC-017): rendered on the server; filters and page live in the
 // URL so refresh, back and shared links keep the same view.

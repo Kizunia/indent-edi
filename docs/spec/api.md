@@ -63,7 +63,7 @@ type IndentDetail = IndentSummary & { items: Line[] };
 ### Indents
 | Method / path | Permission | Purpose |
 |---|---|---|
-| `GET /api/indents` | `indent.view` (scope filter) | list. Query: `search`, `indentTypeId`, `departmentId`, `statusId`, `createdBy` (user id), `dateFrom`, `dateTo`, `page` (1-based). Page size is fixed at **10** (FR-15). Returns `{ items: IndentSummary[], total, page, pageSize: 10 }`. Order `indent_date DESC, id DESC`; exact number match first on page 1 (DEC-011). `departmentId` matches header or any line (DEC-022) |
+| `GET /api/indents` | `indent.view` (scope filter) | list. Query: `search`, `indentTypeId`, `departmentId`, `statusId`, `createdBy` (user id), `date` (one day, SRS 10.3), `dateFrom`, `dateTo` (range), `page` (1-based). Page size is fixed at **10** (FR-15). Returns `{ items: IndentSummary[], total, page, pageSize: 10 }`. Order `indent_date DESC, id DESC`; exact number match first on page 1 (DEC-011). `departmentId` matches header or any line (DEC-022) |
 | `GET /api/indents/creators` | `indent.view` | `{ creators: [{id,name}] }`, distinct creators within the view scope, for the Created By filter |
 | `GET /api/indents/next-number` | `indent.create` | `{ expectedNumber }` preview only (DEC-010) |
 | `POST /api/indents` | `indent.create` (+ `indent.submit` if `submit`) | create. Body below. `201` returns `IndentDetail`. The form compares the returned `indentNumber` with the number it previewed (the request has no preview field), so the response carries no `numberDiffersFromPreview` flag |
@@ -91,7 +91,7 @@ type IndentDetail = IndentSummary & { items: Line[] };
 ### Items and stock
 | Method / path | Permission | Purpose |
 |---|---|---|
-| `GET /api/items?q=` | `indent.create` or `indent.edit` | active items, max 20, `startsWith` before `contains`; returns `{ items: [{id,itemCode,itemName,specification,drawingNumber,defaultUnit}], hasMore }` |
+| `GET /api/items?q=&field=name\|code` | `indent.create` or `indent.edit` | active items, max 20, `startsWith` before `contains`; `field` limits the match to the name or the code column (default both, [DEC-027](../decisions/DEC-027-item-entry-name-and-code.md)); any other `field` is `VALIDATION_FAILED`; returns `{ items: [{id,itemCode,itemName,specification,drawingNumber,defaultUnit}], hasMore }` |
 | `GET /api/stock?itemIds=1,2,3` | `indent.create` or `indent.edit` | `{ stock: [{ itemId, quantity: string \| null, updatedAt: string \| null }] }`; `null` = "Not available"; provider failure -> `STOCK_UNAVAILABLE` |
 
 ### Export
