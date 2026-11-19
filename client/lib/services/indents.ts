@@ -430,6 +430,8 @@ export async function submitIndent(user: AuthUser | null, indentNumber: string, 
   const row = await loadVisible(user, indentNumber);
   authorize(user, "indent.submit", authorizable(row));
   const now = new Date();
+  // Submitting records the stock as it is now (DEC-013 point 5), read before the transaction.
+  const stock = await getStockProvider().getStock(row.items.map((l) => l.itemId));
   await prisma.$transaction(async (tx) => {
     const submitted = await requireStatusCode(tx, "SUBMITTED");
     await lockedUpdate(tx, row.id, version, user.id, {
@@ -437,6 +439,13 @@ export async function submitIndent(user: AuthUser | null, indentNumber: string, 
       submittedAt: now,
       submittedByUserId: user.id,
     });
+    for (const l of row.items) {
+      const quantity = stock.get(l.itemId)?.quantity ?? null;
+      await tx.indentItem.update({
+        where: { id: l.id },
+        data: { currentStockSnapshot: quantity, stockCheckedAt: quantity === null ? null : now },
+      });
+    }
     await tx.indentStatusHistory.create({
       data: {
         indentId: row.id,

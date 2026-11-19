@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { AppError } from "../errors";
 import { getConfig } from "../config";
 import { DEV_SESSION_COOKIE } from "./dev-provider";
@@ -7,6 +8,9 @@ import type { AuthUser } from "./types";
 
 /** The only way server code learns who the user is (DEC-003). Null when not signed in. */
 export async function getCurrentUser(): Promise<AuthUser | null> {
+  // The user differs per request, so nothing that asks must ever be prerendered or cached.
+  // The external provider may not touch cookies(), which would otherwise leave a page static.
+  await connection();
   const provider = selectProvider(getConfig(), async () => (await cookies()).get(DEV_SESSION_COOKIE)?.value);
   return provider.getUser();
 }

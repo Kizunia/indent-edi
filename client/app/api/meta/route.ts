@@ -1,15 +1,11 @@
-import { NextResponse } from "next/server";
-import { getDepartments, getIndentTypes } from "@/lib/repositories/masters";
-import { userMessage } from "@/lib/db/errors";
+import { authorize } from "@/lib/server/auth/authorize";
+import { requireUser } from "@/lib/server/auth/current-user";
+import { apiRoute } from "@/lib/server/http/handler";
+import { getMeta } from "@/lib/services/masters";
 
-// SRS §7.3 / §7.4: sourced from the (placeholder, local) Indent Type Master
-// and Department Master. Swap the implementations in lib/repositories/masters.ts once the
-// company confirms the real master-data source.
-export async function GET() {
-  try {
-    const [departments, indentTypes] = await Promise.all([getDepartments(), getIndentTypes()]);
-    return NextResponse.json({ departments, indentTypes });
-  } catch (err) {
-    return NextResponse.json({ error: userMessage(err, "Failed to load master data.") }, { status: 500 });
-  }
-}
+// GET /api/meta: active masters for the filters and forms (docs/spec/api.md).
+export const GET = apiRoute(async () => {
+  const user = await requireUser();
+  authorize(user, "indent.view");
+  return Response.json(await getMeta());
+});

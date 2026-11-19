@@ -236,6 +236,18 @@ describe("submit and delete (BR-05, BR-06, BR-12, DEC-008)", () => {
     expect((await indents.getIndent(admin, ind.indentNumber)).version).toBe(sub.version);
   });
 
+  it("submit records the stock as it is at that moment (DEC-013)", async () => {
+    const ind = await indents.createIndent(admin, newIndent(f, { items: [line(f, f.stockedItemId)] }));
+    expect(ind.items[0].currentStock).toBe("5.0000");
+    await prisma.stockBalance.update({ where: { itemId: f.stockedItemId }, data: { currentQuantity: 9, updatedAt: new Date() } });
+    try {
+      const sub = await indents.submitIndent(admin, ind.indentNumber, ind.version);
+      expect(sub.items[0].currentStock).toBe("9.0000");
+    } finally {
+      await prisma.stockBalance.update({ where: { itemId: f.stockedItemId }, data: { currentQuantity: 5, updatedAt: new Date() } });
+    }
+  });
+
   it("submit needs the current version", async () => {
     const ind = await indents.createIndent(admin, newIndent(f));
     await expectCode(indents.submitIndent(admin, ind.indentNumber, ind.version + 5), "VERSION_CONFLICT");

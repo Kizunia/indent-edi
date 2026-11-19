@@ -1,69 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
-import * as XLSX from "xlsx";
-import { getIndentsByIds, queryIndents } from "@/lib/repositories/indents";
-import { userMessage } from "@/lib/db/errors";
-import { legacyExportSchema } from "@/lib/shared/schemas/legacy";
-import { validateBody, validationResponse } from "@/lib/server/http/legacy";
-import type { Indent } from "@/lib/types";
+import { Readable } from "node:stream";
+import { requireUser } from "@/lib/server/auth/current-user";
+import { getConfig } from "@/lib/server/config";
+import { streamIndentsWorkbook } from "@/lib/server/export/indents-xlsx";
+import { apiRoute, parseJson } from "@/lib/server/http/handler";
+import { fileTimestamp } from "@/lib/shared/datetime";
+import { exportSchema } from "@/lib/shared/schemas/indent";
+import { selectExportIds } from "@/lib/services/export";
 
-// FR-19 / SRS §40-41: export one selected Indent, multiple selected Indents,
-// or all Indents (respecting the currently applied filters), each row
-// carrying full Indent + Item information.
-export async function POST(req: NextRequest) {
-  let indents: Indent[];
-  try {
-    const body = await validateBody(req, legacyExportSchema);
-    if (body.mode === "all") {
-      // "All Indents" honors any filters currently applied on the list (§40C).
-      indents = (await queryIndents({ ...(body.filters || {}), page: 1, pageSize: 100000 })).results;
-    } else {
-      indents = await getIndentsByIds(body.ids);
-    }
-  } catch (err) {
-    return validationResponse(err) ?? NextResponse.json({ error: userMessage(err, "Failed to export.") }, { status: 500 });
-  }
+// exceljs needs Node APIs; the response is streamed so large exports stay flat in memory.
+export const runtime = "nodejs";
 
-  if (indents.length === 0) {
-    return NextResponse.json({ error: "No Indents to export." }, { status: 400 });
-  }
-
-  const rows: Record<string, any>[] = [];
-  for (const indent of indents) {
-    for (const item of indent.items) {
-      rows.push({
-        "Indent Number": indent.indentNumber,
-        "Indent Type": indent.indentType,
-        "Date": indent.indentDate,
-        "Time": indent.time,
-        "Department": indent.department,
-        "Created By": indent.createdBy,
-        "Remark/Note": indent.remark || "",
-        "Status": indent.status,
-        "Item Code": item.itemCode,
-        "Item Name": item.itemName,
-        "Specification": item.specification || "",
-        "Drawing Number": item.drawingNumber || "",
-        "Purpose": item.purpose || "",
-        "Current Stock": item.currentStockAtEntry,
-        "Required Quantity": item.requiredQuantity,
-        "Required Date": item.requiredDate,
-        "Unit": item.unit,
-      });
-    }
-  }
-
-  const worksheet = XLSX.utils.json_to_sheet(rows);
-  worksheet["!cols"] = Object.keys(rows[0]).map(() => ({ wch: 18 }));
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Indents");
-
-  const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
-
-  return new NextResponse(buffer, {
-    status: 200,
+// POST /api/indents/export: selected indents, or everything matching the list filters (FR-19).
+// Authorization and validation happen before streaming starts, so they still give a normal error response.
+export const POST = apiRoute(async (req) => {
+  const user = await requireUser();
+  const input = await parseJson(req, exportSchema);
+  const ids = await selectExportIds(user, input);
+  const { appTimezone } = getConfig();
+  const filename = `indents-${fileTimestamp(new Date(), appTimezone)}.xlsx`;
+  const stream = Readable.toWeb(streamIndentsWorkbook(ids, appTimezone)) as ReadableStream<Uint8Array>;
+  return new Response(stream, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="indents-export.xlsx"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Cache-Control": "no-store",
     },
   });
-}
+});
