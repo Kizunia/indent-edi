@@ -24,6 +24,7 @@
     "db:studio": "prisma studio",
     "db:validate": "prisma validate",
     "db:seed": "prisma db seed",
+    "db:seed:sample": "tsx prisma/seed-sample.ts",
     "db:reset:test": "node scripts/reset-test-db.mjs"
   },
   "dependencies": {
