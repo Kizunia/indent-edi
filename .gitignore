@@ -1,0 +1,9 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+~$*
+*.tmp
+
+# Local environment (the app's own client/.gitignore covers client/.env*)
+.env
+.env.local

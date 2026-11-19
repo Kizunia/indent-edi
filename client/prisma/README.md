@@ -7,7 +7,7 @@ Requires MySQL >= 8.0.16 (CHECK constraints are ignored on older versions).
 2. `cp .env.example .env` and set `DATABASE_URL`.
 3. `npm install` (runs `prisma generate`).
 4. `npm run db:migrate` (applies `migrations/0001_init`: tables, CHECKs, DRAFT/SUBMITTED statuses, number sequences).
-5. `npm run db:seed` loads the prototype's departments, indent types, items, stock and demo indents from `data/*.json` (safe to re-run).
+5. `npm run db:seed` loads SAMPLE departments, indent types, units, items, stock and two demo indents (self-contained in `prisma/seed.ts`; safe to re-run). Indent Numbers and Item Codes use the configured format (`IND-000001`, `ITM-000001`, DEC-010). Demo indents are created by the dev auth users (`lib/server/auth/dev-users.ts`) so every role in the dev user switcher has data.
 6. Optional: `npm run db:seed:sample` adds 20 more items and 16 indents covering every status, type, department and filter (needs step 5 first; safe to re-run). Statuses beyond Draft/Submitted are placeholders from SRS 7.9.
 7. `npm run dev`. `npm run db:studio` shows the data.
 

@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'integration/**', 'feat/**']
   pull_request:
 
 defaults:
@@ -46,3 +46,6 @@ jobs:
       - run: npm run build
         env:
           DATABASE_URL: mysql://root:password@127.0.0.1:3307/indent_test
+      - name: Dependency audit (non-blocking until xlsx is replaced)
+        run: npm audit --omit=dev
+        continue-on-error: true

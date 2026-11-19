@@ -25,7 +25,8 @@
     "db:validate": "prisma validate",
     "db:seed": "prisma db seed",
     "db:seed:sample": "tsx prisma/seed-sample.ts",
-    "db:reset:test": "node scripts/reset-test-db.mjs"
+    "db:reset:test": "node scripts/reset-test-db.mjs",
+    "db:setup": "npm run db:up && prisma migrate deploy && npm run db:seed && npm run db:seed:sample"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

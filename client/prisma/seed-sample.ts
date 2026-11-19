@@ -7,7 +7,7 @@
 // Run AFTER the base seed:   npm run db:seed && npm run db:seed:sample
 // Idempotent: items are matched by name, indents by their number.
 import { PrismaClient, Prisma } from "@prisma/client";
-import { nextSequence } from "../lib/db/sequence";
+import { CREATORS, ensureItem, ensureUnit, nextIndentNumber, utc, type CreatorName } from "./seed-lib";
 
 const prisma = new PrismaClient();
 
@@ -47,7 +47,7 @@ const NEW_ITEMS: [string, string, string, string, number][] = [
 
 interface Line { item: string; dept?: string; purpose?: string; qty: number; unit?: string; reqDate: string }
 interface Spec {
-  date: string; time: string; type: string; dept: string; by: string; remark?: string;
+  date: string; time: string; type: string; dept: string; by: CreatorName; remark?: string;
   status: "Draft" | "Submitted" | "Pending Approval" | "Approved" | "Rejected" | "Cancelled";
   lines: Line[];
 }
@@ -134,8 +134,6 @@ const SPECS: Spec[] = [
     lines: [{ item: "Ball Bearing 6205", dept: "Stores", purpose: "Spare stock", qty: 50, reqDate: "2026-11-14" }] },
 ];
 
-const utc = (d: string, t = "00:00") => new Date(`${d}T${t}:00.000Z`);
-
 // Status path taken to reach each final status, as [from, to] pairs.
 const PATH: Record<Spec["status"], Array<[string | null, string]>> = {
   Draft: [[null, "Draft"]],
@@ -160,22 +158,10 @@ async function main() {
   }
 
   // Items + stock (matched by name so existing/test items never collide).
-  for (const [name, spec, drawing, unitCode, qty] of NEW_ITEMS) {
-    if (await prisma.item.findFirst({ where: { itemName: name } })) continue;
-    await prisma.$transaction(async (tx) => {
-      const unit = await tx.unit.upsert({ where: { code: unitCode }, update: {}, create: { code: unitCode, name: unitCode } });
-      const seq = await nextSequence(tx, "ITEM");
-      const item = await tx.item.create({
-        data: {
-          itemCode: `ITM-${String(seq).padStart(5, "0")}`,
-          itemName: name,
-          specification: spec || null,
-          drawingNumber: drawing || null,
-          defaultUnitId: unit.id,
-        },
-      });
-      await tx.stockBalance.create({ data: { itemId: item.id, currentQuantity: qty, updatedAt: utc("2026-10-28", "08:00") } });
-    });
+  for (const [name, specification, drawingNumber, unit, stock] of NEW_ITEMS) {
+    await prisma.$transaction((tx) =>
+      ensureItem(tx, { name, specification, drawingNumber, unit, stock, stockAt: utc("2026-10-28", "08:00") })
+    );
   }
 
   const statuses = new Map((await prisma.indentStatus.findMany()).map((s) => [s.name, s.id]));
@@ -193,21 +179,20 @@ async function main() {
       // Skip if this sample indent was already seeded (same creator and
       // creation instant). TIME columns cannot be compared reliably through
       // Prisma filters, so createdAt is the idempotency key.
+      const creator = CREATORS[spec.by];
       const dup = await tx.indent.findFirst({
-        where: { createdByUserId: spec.by, createdAt: created_at },
+        where: { createdByUserId: creator.id, createdAt: created_at },
       });
       if (dup) return;
 
-      const datePart = spec.date.replace(/-/g, "");
-      const seq = await nextSequence(tx, `INDENT:${datePart}`);
-      const indentNumber = `IND-${datePart}-${String(seq).padStart(4, "0")}`;
+      // Single INDENT counter in the configured format (DEC-010).
+      const indentNumber = await nextIndentNumber(tx);
 
       const lines: Prisma.IndentItemCreateWithoutIndentInput[] = [];
       for (const [n, l] of spec.lines.entries()) {
         const item = await tx.item.findFirstOrThrow({ where: { itemName: l.item }, include: { stock: true, defaultUnit: true } });
         const ldept = await tx.department.findFirstOrThrow({ where: { name: l.dept ?? spec.dept } });
-        const unit = l.unit ?? item.defaultUnit?.code ?? "Nos";
-        const unitRow = await tx.unit.upsert({ where: { code: unit }, update: {}, create: { code: unit, name: unit } });
+        const unitRow = await ensureUnit(tx, l.unit ?? item.defaultUnit?.code ?? "Nos");
         // The snapshot is what the user saw when entering the line. For the
         // deliberately stale draft, the snapshot is higher than today's stock.
         const stale = spec.remark?.startsWith("Stock snapshot is stale");
@@ -226,7 +211,7 @@ async function main() {
           requiredQuantity: l.qty,
           requiredUnit: { connect: { id: unitRow.id } },
           requiredDate: utc(l.reqDate),
-          createdByUserId: spec.by,
+          createdByUserId: creator.id,
         });
       }
 
@@ -242,17 +227,17 @@ async function main() {
           indentTime: utc("1970-01-01", spec.time),
           remark: spec.remark ?? null,
           createdAt: created_at,
-          createdByUserId: spec.by,
-          createdByName: spec.by,
+          createdByUserId: creator.id,
+          createdByName: creator.name,
           submittedAt: submitted ? new Date(created_at.getTime() + 3600_000) : null,
-          submittedByUserId: submitted ? spec.by : null,
+          submittedByUserId: submitted ? creator.id : null,
           items: { create: lines },
           history: {
             create: path.map(([from, to], i) => ({
               fromStatusId: from ? statuses.get(from)! : null,
               toStatusId: statuses.get(to)!,
               changedAt: new Date(created_at.getTime() + i * 3600_000),
-              changedByUserId: i < 2 ? spec.by : null,
+              changedByUserId: i < 2 ? creator.id : null,
               source: i < 2 ? "APP" : "APPROVAL",
               note: i === 0 ? "Sample data" : null,
             })),
