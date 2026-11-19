@@ -47,3 +47,17 @@ An enterprise web app for creating, saving, submitting, listing, exporting and p
 | Setup and scripts | `docs/architecture/dev-setup.md` |
 | What to build next | `docs/plan/roadmap.md` |
 | Presentation material | `docs/presentation/` (update page 05 when a work item's status changes) |
+
+## Commands and gotchas (from `client/`)
+
+```bash
+npm run db:setup                 # Docker MySQL + migrations + sample data
+npm run dev                      # use dev, not start: production refuses the dev auth provider
+npm run lint && npm run typecheck && npm test && npm run test:int && npm run build
+```
+
+- **Check `client/.env` before running anything that writes.** `DATABASE_URL` decides which database the app, seeds and probes change. Use the Docker URLs from `.env.example` for experiments.
+- Integration tests need `DATABASE_URL_TEST` ending in `_test` with the migration applied (`DATABASE_URL=<that url> npx prisma migrate deploy`). Prisma blocks `migrate reset` for AI agents without explicit user consent; do not work around it.
+- Business rules live in `client/lib/services/`; routes and pages only authenticate, validate, authorize and call them. Session reads go through `getCurrentUser()`, which calls `connection()` so pages are never prerendered.
+- Status editability is data (`indent_status_master.is_editable`); services key on status codes (`DRAFT`, `SUBMITTED`), never on display names.
+- `exceljs` needs the Node runtime (`export const runtime = "nodejs"` on the export route).

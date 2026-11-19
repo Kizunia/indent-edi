@@ -1,6 +1,6 @@
 # Traceability: SRS requirement -> decision -> spec -> work item -> test
 
-Every requirement id in the SRS appears here. When a work item is completed, tick its status in [roadmap.md](../plan/roadmap.md) and make sure the Test column names a real test. Test kinds: **U** unit, **I** integration (MySQL test DB), **E** end-to-end (Playwright).
+Every requirement id in the SRS appears here. When a work item is completed, tick its status in [roadmap.md](../plan/roadmap.md) and make sure the Test column names a real test. Test kinds: **U** unit, **I** integration (MySQL test DB), **E** end-to-end (Playwright). **E rows are deferred** (decision 2026-11-19): until WI-12 they are covered by integration tests and manual checks only.
 
 ## Functional requirements
 

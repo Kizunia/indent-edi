@@ -17,7 +17,7 @@ The MVP stores everything in JSON files read and rewritten on every request ([`c
 1. The app uses the teammate's schema as it is. **The app does not change the schema or migrations.** Needs go to [`db-handoff.md`](../data-model/db-handoff.md).
 2. All data access is async and goes through repositories/services in `client/lib/server/` (see [architecture](../architecture/overview.md)). Route handlers and pages never import Prisma directly.
 3. External systems are reached through interfaces: `StockProvider` (D-25), `AuthProvider` (DEC-003), and later an item/department master adapter. This is how NFR-08 (ERP swap without rewrite) is met.
-4. `lib/store.ts`, `client/data/*.json` and the `uuid` dependency are removed when WI-04 lands. JSON is not kept as a fallback.
+4. `lib/store.ts`, `client/data/*.json` and the `uuid` dependency are removed. JSON is not kept as a fallback. (Done 2026-11-19: the seeds embed their fixtures.)
 5. Ids exposed to the browser are integers from Prisma. Decimals cross the API boundary as strings (D-06). URLs and exports identify an indent by `indent_number` (D-01, D-11).
 6. Master data (departments, indent types, units, items, stock) comes from the DB owner's seed. The SRS forbids inventing the lists, so sample data used for tests/dev is labelled `SAMPLE` and never shipped as production data.
 

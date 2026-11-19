@@ -6,7 +6,7 @@ Status: `Open` / `Answered`. "Needs migration" is from the DB owner's section 9 
 
 | # | Question (SRS ref) | Status | Current provisional behaviour | Decision | Migration if answered otherwise |
 |---|---|---|---|---|---|
-| 1 | Indent Number format (7.2) | Open | `IND-` + 6 digits, config | [DEC-010](decisions/DEC-010-number-generation-and-preview.md) | No |
+| 1 | Indent Number format (7.2) | Open (default in use) | `IND-` + 6 digits, config | [DEC-010](decisions/DEC-010-number-generation-and-preview.md) | No |
 | 2 | Item Code format (8.4) | Open | `ITM-` + 6 digits, config | [DEC-010](decisions/DEC-010-number-generation-and-preview.md) | No |
 | 3 | Exact Indent Types; who can create them (7.3) | Open | Read from `indent_type_master`; no creation UI | [DEC-002](decisions/DEC-002-persistence-prisma-mysql.md) | No |
 | 4 | Department Master source (7.4, 14) | Open | `department_master` rows from the DB owner | [DEC-022](decisions/DEC-022-department-handling.md) | No |

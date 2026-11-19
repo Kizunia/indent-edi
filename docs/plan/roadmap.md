@@ -4,9 +4,9 @@ This file is the **only** place that tracks progress. Update the status in the s
 
 Status values: `todo` | `in-progress` | `blocked (reason)` | `done (date)`.
 
-Last updated: 2026-10-29 (docs written; WI-01 code, WI-02 and WI-03 implemented while the DB is still in progress).
+Last updated: 2026-11-19 (integration branch: WI-01..WI-11 and WI-13 implemented; WI-12 browser E2E/axe deferred by the user).
 
-**Current state:** WI-01..03 do not need the database and are done or nearly done. WI-04 onward is blocked on the DB owner (H-01 seed data, H-02 verified migration, see [db-handoff.md](../data-model/db-handoff.md)).
+**Current state:** the app runs end to end on MySQL: spec API, server-rendered UI, streaming export, 283 unit and 33 integration tests, 0 lint warnings. Not done: Playwright E2E + axe (WI-12, deferred), the real `external` auth provider and the approval/inventory integrations (backlog B-04..B-06). Not verified in a real browser by the implementer: hydration, dialogs and the item combobox were checked only through types, build and server responses.
 
 ## Docs phase
 
@@ -19,7 +19,7 @@ Last updated: 2026-10-29 (docs written; WI-01 code, WI-02 and WI-03 implemented 
 ## Work items
 
 ### WI-01 Tooling: npm only, Docker MySQL, test runner, CI skeleton
-- **Status:** in-progress. Done 2026-10-29: npm only (pnpm files removed, `npm ci` clean), `docker-compose.yml` (valid; MySQL 8.0 on 3307, `indent_dev` + `indent_test`), `.env.example`, scripts, Vitest unit + integration configs (the integration setup refuses non-`_test` databases), `reset-test-db.mjs`, `.github/workflows/ci.yml`, lint/typecheck/test/build all pass locally. **Not yet verified:** starting the container and applying the migration (Docker Desktop was not running; also needs H-02), and the CI workflow has never run on GitHub. `npm run lint` is green only because legacy MVP files are temporarily downgraded to warnings in `eslint.config.mjs` (removed in WI-13). `npm audit` still reports 9 vulnerabilities (the `xlsx` package among them, replaced in WI-10).
+- **Status:** done (2026-11-19). npm only (pnpm files removed), Docker MySQL verified healthy, migration `0001_init` applied cleanly on MySQL 8.0, CI also runs on `integration/**` and `feat/**` pushes (the workflow has still never run on GitHub). `npm audit --omit=dev` no longer reports `xlsx`; remaining findings are Next.js (upgrade to 16.4.6+) and Prisma tooling.
 - **Depends on:** none | **Decisions:** DEC-023, DEC-024
 - **Do:** remove pnpm files and reinstall with npm; add `docker-compose.yml` (MySQL 8.0, port 3307, `indent_dev` + `indent_test`); update `.env.example`; add scripts from [dev-setup.md](../architecture/dev-setup.md); add Vitest config; GitHub Actions workflow (lint, typecheck, test, build).
 - **Accept:** a clean clone can run `docker compose up -d`, `npm ci`, `npm run db:migrate` and `npm test` (with at least one trivial test) successfully; CI is green.
@@ -38,52 +38,52 @@ Last updated: 2026-10-29 (docs written; WI-01 code, WI-02 and WI-03 implemented 
 - **Accept:** table-driven unit test of the full matrix per [permissions.md](../spec/permissions.md); dev provider throws when `NODE_ENV=production`; unauthenticated API call returns 401 envelope.
 
 ### WI-04 Prisma repositories and services (replace the JSON store)
-- **Status:** todo | **Depends on:** WI-02, WI-03, db-handoff H-01 (seed data) | **Decisions:** DEC-002, DEC-008 (soft delete), DEC-010, DEC-011, DEC-013 (provider), DEC-016, DEC-021, DEC-022, DEC-025
+- **Status:** done (2026-11-19). `lib/services/{indents,items,masters,mappers,scope,numbering,stock-provider}.ts`; legacy repositories deleted. Soft-delete visibility is a shared `NOT_DELETED` filter in `scope.ts` rather than a Prisma extension. | **Depends on:** WI-02, WI-03, db-handoff H-01 (seed data) | **Decisions:** DEC-002, DEC-008 (soft delete), DEC-010, DEC-011, DEC-013 (provider), DEC-016, DEC-021, DEC-022, DEC-025
 - **Do:** `db.ts` with soft-delete extension; repositories (indent, item, masters, stock, number sequence); `StockProvider`; services for list/filter/search/paginate, get, create (transaction, numbering, new items, snapshots), next-number preview, item search, meta, stock lookup; delete `lib/store.ts`, `client/data/`, `uuid`.
 - **Accept:** integration tests: parallel creates yield distinct gap-free numbers; failed create leaves no item or number consumed; list filters and the department OR rule; exact-first search; page size 10; soft-deleted indents invisible; stock unchanged by create (BR-04); stock "Not available" stored as NULL.
 
 ### WI-05 Server-owned rules
-- **Status:** todo | **Depends on:** WI-04 | **Decisions:** DEC-005, DEC-006, DEC-007, DEC-008, DEC-009, DEC-016
+- **Status:** done (2026-11-19). Submit, edit remark/lines, add/remove line (last-line guard, renumbering), delete Draft, create+submit in one transaction, version lock. Covered by `tests/integration/indents-write.test.ts`. | **Depends on:** WI-04 | **Decisions:** DEC-005, DEC-006, DEC-007, DEC-008, DEC-009, DEC-016
 - **Do:** submit service and history rows; edit remark/lines; add/delete line with last-line guard; delete indent; duplicate rule; Save & Submit transaction; optimistic lock; reject unknown/immutable fields.
 - **Accept:** integration tests for every row of [domain-rules.md](../spec/domain-rules.md) section 3, `VERSION_CONFLICT` and `NOT_EDITABLE` cases, no way to set `status` from any endpoint.
 
 ### WI-06 Route handlers rewritten
-- **Status:** todo | **Depends on:** WI-03, WI-05 | **Decisions:** DEC-014, DEC-015
+- **Status:** done (2026-11-19). Every endpoint in `api.md` exists as a thin handler. No route-level HTTP test suite yet: 401/403/404/400/409 are covered at service level and checked by hand over HTTP; a route-level suite is a gap. | **Depends on:** WI-03, WI-05 | **Decisions:** DEC-014, DEC-015
 - **Do:** implement every endpoint in [api.md](../spec/api.md) as a thin handler (authenticate, validate, authorize, service, envelope). Remove routes that are not in the spec.
 - **Accept:** route-level integration tests for 401/403/404/400/409 on each endpoint; responses match the shapes in the spec; no `err.message` is returned to clients.
 
 ### WI-07 Server-rendered pages and URL-driven list
-- **Status:** todo | **Depends on:** WI-06 | **Decisions:** DEC-017, DEC-011, DEC-020
+- **Status:** done (2026-11-19). List, new and detail are Server Components; filters and page are in the URL; `<Link>` navigation; `loading`, `error`, `not-found`, `forbidden`, `not-signed-in`. Known: `notFound()` after streaming starts answers HTTP 200 with the not-found UI (Next.js behaviour). | **Depends on:** WI-06 | **Decisions:** DEC-017, DEC-011, DEC-020
 - **Do:** list/detail/new pages as Server Components; filters + page in URL; `<Link>` row navigation; expandable item grid; `loading.tsx`, `error.tsx`, `not-found`; item picker with `AbortController`.
 - **Accept:** first HTML response contains the list rows; refresh and back button keep filters; keyboard can open a row; no `window.location.href` navigation.
 
 ### WI-08 UI components and behaviour
-- **Status:** todo | **Depends on:** WI-07 | **Decisions:** DEC-006, DEC-009, DEC-010, DEC-012, DEC-015, DEC-019, DEC-020
+- **Status:** done (2026-11-19) except axe and the 375px browser check, which belong to WI-12. `ErrorDialog` + `apiFetch`, native-`<dialog>` `ConfirmDialog`, labelled fields, accessible combobox, responsive Tailwind. | **Depends on:** WI-07 | **Decisions:** DEC-006, DEC-009, DEC-010, DEC-012, DEC-015, DEC-019, DEC-020
 - **Do:** `ErrorDialog` + `apiFetch`; accessible `ConfirmDialog`; Tailwind conversion, responsive layout; `Field`, `FilterBar`, `DataTable`, `ItemGrid`; Create screen per [ui.md](../spec/ui.md) (expected number, read-only date/time/Created By, remove-before-save, Save Draft / Save & Submit, unsaved guard); list Delete only for Draft; all failures shown in the dialog; confirmation texts.
 - **Accept:** E2E for create/save/submit/delete/edit including each confirmation and error dialog; axe has no serious violations on the 3 pages; page has no horizontal scroll at 375px width.
 
 ### WI-09 Stock freshness
-- **Status:** todo | **Depends on:** WI-08 | **Decisions:** DEC-013
+- **Status:** done (2026-11-19). Stock re-checked before the Save/Submit confirmation ("was X, now Y", Update stock values); Submit stores current stock; detail-page notice for Drafts. Deviation: the detail notice has no separate "Update" button, because stock is refreshed by Submit. | **Depends on:** WI-08 | **Decisions:** DEC-013
 - **Do:** re-check at Save/Submit confirm with "was X, now Y" and Update; detail-page notice; "Not available" rendering everywhere.
 - **Accept:** integration + E2E: change stock between add and save -> notice shown, save still works, saved snapshot equals the server-read value.
 
 ### WI-10 Export
-- **Status:** todo | **Depends on:** WI-06 | **Decisions:** DEC-018
+- **Status:** done (2026-11-19). `exceljs` streaming writer, 20 columns, typed cells, frozen header, autofilter, formula guard, selected or all-matching export; `xlsx` removed. Verified by reading a generated file back; no automated large-dataset test yet. | **Depends on:** WI-06 | **Decisions:** DEC-018
 - **Do:** exceljs streaming export per [export-print.md](../spec/export-print.md); select page / select all matching; filename; remove `xlsx`.
 - **Accept:** integration test reads the generated file: columns, typed cells, row count for one/many/filtered/all, scope limited, deleted excluded, formula-injection guard; large dataset (e.g. 5 000 indents) streams without loading all in memory.
 
 ### WI-11 Print
-- **Status:** todo | **Depends on:** WI-08 | **Decisions:** DEC-026
+- **Status:** done (2026-11-19). Print header block and print stylesheet; checked in CSS only, not in a browser print preview. | **Depends on:** WI-08 | **Decisions:** DEC-026
 - **Do:** print stylesheet and header block.
 - **Accept:** E2E emulates print media: controls hidden, header block visible, all lines present.
 
 ### WI-12 End-to-end and CI completion
-- **Status:** todo | **Depends on:** WI-08..WI-11 | **Decisions:** DEC-024
+- **Status:** deferred (2026-11-19, by the user): Playwright E2E per role and axe checks. CI runs lint, typecheck, unit, integration and build. | **Depends on:** WI-08..WI-11 | **Decisions:** DEC-024
 - **Do:** Playwright suite per role; axe checks; CI runs everything; fix flakiness.
 - **Accept:** CI green on a clean checkout, including E2E on main.
 
 ### WI-13 Cleanup and final traceability check
-- **Status:** todo | **Depends on:** WI-12
+- **Status:** done (2026-11-19). Legacy files, `data/`, pnpm files, unused assets and lint downgrades removed; no code comment cites a non-existent SRS section; docs refreshed. Traceability E/axe rows remain deferred with WI-12. | **Depends on:** WI-12
 - **Do:** remove wrong SRS section references in comments (cite FR/BR ids instead); delete dead code; verify every row of [traceability.md](../spec/traceability.md) has a passing test; refresh [open-questions.md](../open-questions.md).
 - **Accept:** no code comment cites an SRS "section" that doesn't exist in `SRS-v1.0.md`; traceability has no empty Test cell.
 

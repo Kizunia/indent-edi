@@ -18,6 +18,7 @@ Design rationale: see [`docs/data-model/final-data-model.md`](../../docs/data-mo
 
 ## Code layout
 
-- `lib/db/` shared plumbing: `client.ts` (Prisma singleton), `sequence.ts` (concurrency-safe numbering), `mappers.ts` (DB rows <-> API shapes in `lib/types.ts`), `dates.ts`, `errors.ts`.
-- `lib/repositories/` the only code that touches Prisma: `masters.ts`, `items.ts`, `stock.ts`, `indents.ts`.
-- `app/api/**` thin HTTP routes that call the repositories. Raw database errors are logged server-side and never sent to the browser.
+- `lib/db/client.ts` the Prisma singleton; `lib/db/sequence.ts` concurrency-safe numbering.
+- `lib/services/` the only code that touches Prisma and where every business rule lives: `indents.ts`, `items.ts`, `masters.ts`, `export.ts`, `numbering.ts`, `scope.ts`, `stock-provider.ts`, `mappers.ts`.
+- `app/api/**` thin HTTP routes; pages call the services directly. Raw database errors are logged server-side and never sent to the browser.
+- `prisma/seed.ts`, `seed-sample.ts`, `seed-lib.ts` SAMPLE data (idempotent, no JSON files).

@@ -64,15 +64,15 @@ type IndentDetail = IndentSummary & { items: Line[] };
 | Method / path | Permission | Purpose |
 |---|---|---|
 | `GET /api/indents` | `indent.view` (scope filter) | list. Query: `search`, `indentTypeId`, `departmentId`, `statusId`, `createdBy` (user id), `dateFrom`, `dateTo`, `page` (1-based). Page size is fixed at **10** (FR-15). Returns `{ items: IndentSummary[], total, page, pageSize: 10 }`. Order `indent_date DESC, id DESC`; exact number match first on page 1 (DEC-011). `departmentId` matches header or any line (DEC-022) |
-| `GET /api/indents/creators` | `indent.view` | distinct `{id,name}` of creators within the view scope, for the Created By filter |
+| `GET /api/indents/creators` | `indent.view` | `{ creators: [{id,name}] }`, distinct creators within the view scope, for the Created By filter |
 | `GET /api/indents/next-number` | `indent.create` | `{ expectedNumber }` preview only (DEC-010) |
-| `POST /api/indents` | `indent.create` (+ `indent.submit` if `submit`) | create. Body below. `201` returns `IndentDetail` and `numberDiffersFromPreview` |
+| `POST /api/indents` | `indent.create` (+ `indent.submit` if `submit`) | create. Body below. `201` returns `IndentDetail`. The form compares the returned `indentNumber` with the number it previewed (the request has no preview field), so the response carries no `numberDiffersFromPreview` flag |
 | `GET /api/indents/{indentNumber}` | `indent.view` (scope) | `IndentDetail` |
 | `PATCH /api/indents/{indentNumber}` | `indent.edit` | body `{ version, remark }` (Draft only) -> `IndentDetail` |
 | `POST /api/indents/{indentNumber}/items` | `indent.edit` | add a line: `{ version, line }` -> `IndentDetail` |
 | `PATCH /api/indents/{indentNumber}/items/{lineId}` | `indent.edit` | `{ version, purpose?, requiredQuantity?, requiredDate?, requiredUnitId?, departmentId? }` -> `IndentDetail` |
 | `DELETE /api/indents/{indentNumber}/items/{lineId}?version=` | `indent.edit` | delete a line (not the last) -> `IndentDetail` |
-| `POST /api/indents/{indentNumber}/submit` | `indent.submit` | `{ version }` -> `IndentDetail` |
+| `POST /api/indents/{indentNumber}/submit` | `indent.submit` | `{ version }` -> `IndentDetail`. Re-reads stock and stores it on every line (DEC-013 point 5) |
 | `DELETE /api/indents/{indentNumber}?version=` | `indent.delete` | soft delete (Draft only) -> `204` |
 
 **Create body:**

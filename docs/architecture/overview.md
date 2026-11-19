@@ -61,7 +61,7 @@ client/
   tests/ unit/, integration/, e2e/, factories/
 ```
 
-`lib/store.ts`, `lib/types.ts`, `lib/prisma.ts` and `client/data/` are removed or replaced in WI-02/WI-04.
+`lib/store.ts`, `lib/types.ts`, `lib/repositories/`, the legacy schemas and `client/data/` have been removed. The services layer is `lib/services/` (calls Prisma directly; `StockProvider` is the swap point for a real Inventory DB). Response types live in `lib/services/types.ts`.
 
 ## 3. Cross-cutting
 
